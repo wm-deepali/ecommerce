@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en" data-textdirection="ltr" class="loading">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
+  <meta name="description" content="Oudhyana Chikankaari a exclusive store for Lucknowi Chikan kaari">
+  <meta name="keywords" content="Oudhyana Chikankaari">
+  <meta name="author" content="Webmingo">
+  <meta name="csrf-token" content="{{ csrf_token() }}" />
+  <title>Admin Dashboard | Oudhyana Chikankaari</title>
+
+  <!-- Vendor CSS -->
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="https://site-assets.fontawesome.com/releases/v6.1.1/css/all.css">
+  <link rel="stylesheet" type="text/css" href="{{ URL::asset('admin/css/datatable.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/10.10.4/sweetalert2.min.css">
+  <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+  <link rel="stylesheet" type="text/css" href="{{ URL::asset('admin/custom/css/header.css') }}">
+  <link rel="stylesheet" type="text/css" href="{{ URL::asset('admin/custom/css/style.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+  /* ════════════════════════════════════════════
+     GLOBAL RESET & VARIABLES
+  ════════════════════════════════════════════ */
+  :root {
+    --navy:       #303d89;
+    --navy-dark:  #252f70;
+    --navy-deep:  #1e2660;
+    --navy-light: #eef0fc;
+    --navy-border:#c5c9ef;
+    --surface:    #ffffff;
+    --border:     #e3e5e8;
+    --text-primary:   #202223;
+    --text-secondary: #6d7175;
+    --text-hint:      #8c9196;
+    --bg:         #f1f2f4;
+    --green:      #007a5e;
+    --green-bg:   #e3f1ec;
+    --red:        #c0392b;
+    --amber:      #916a00;
+    --amber-bg:   #fff5cc;
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --shadow: 0 1px 0 rgba(0,0,0,.05), 0 0 0 1px rgba(0,0,0,.07);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    font-family: var(--font);
+    color: var(--text-primary);
+    font-size: 14px;
+    margin: 0;
+  }
+
+  /* ════════════════════════════════════════════
+     LAYOUT
+  ════════════════════════════════════════════ */
+  .main-section {
+    display: flex !important;
+  }
+  .main-section #cssmenu {
+    width: 240px !important;
+    min-width: 240px !important;
+    flex-shrink: 0 !important;
+  }
+  .main-section .app-content {
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  /* ════════════════════════════════════════════
+     TOP HEADER
+  ════════════════════════════════════════════ */
+  .ou-topbar {
+    background: var(--navy);
+    height: 56px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(48,61,137,.25);
+  }
+
+  /* Logo area */
+  .ou-topbar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+  .ou-topbar-logo img {
+    height: 34px;
+    width: auto;
+    object-fit: contain;
+    filter: brightness(0) invert(1);
+  }
+  .ou-topbar-brand {
+    display: flex;
+    flex-direction: column;
+  }
+  .ou-topbar-brand-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.1;
+    letter-spacing: -.1px;
+  }
+  .ou-topbar-brand-sub {
+    font-size: 10px;
+    color: rgba(255,255,255,.55);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-top: 1px;
+  }
+
+  /* Divider */
+  .ou-topbar-divider {
+    width: 1px;
+    height: 28px;
+    background: rgba(255,255,255,.15);
+    margin: 0 20px;
+    flex-shrink: 0;
+  }
+
+  /* Store status pill */
+  .ou-store-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,.1);
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255,255,255,.85);
+    cursor: default;
+  }
+  .ou-store-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 0 2px rgba(74,222,128,.3);
+    animation: pulse 2s infinite;
+    flex-shrink: 0;
+  }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 2px rgba(74,222,128,.3); }
+    50%      { box-shadow: 0 0 0 4px rgba(74,222,128,.15); }
+  }
+
+  /* Right actions area */
+  .ou-topbar-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Icon button (notification, search etc) */
+  .ou-icon-btn {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    border: none;
+    background: transparent;
+    color: rgba(255,255,255,.75);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    transition: background .15s, color .15s;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+  .ou-icon-btn:hover {
+    background: rgba(255,255,255,.12);
+    color: #fff;
+    text-decoration: none;
+  }
+
+  /* Notification badge */
+  .ou-notif-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #f87171;
+    border: 2px solid var(--navy);
+    font-size: 9px;
+    font-weight: 800;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  /* Divider between icons & user */
+  .ou-topbar-right-sep {
+    width: 1px;
+    height: 24px;
+    background: rgba(255,255,255,.15);
+    margin: 0 6px;
+    flex-shrink: 0;
+  }
+
+  /* User button */
+  .ou-user-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,.1);
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: var(--radius-md);
+    padding: 5px 10px 5px 6px;
+    cursor: pointer;
+    transition: background .15s;
+    flex-shrink: 0;
+    text-decoration: none;
+  }
+  .ou-user-btn:hover {
+    background: rgba(255,255,255,.18);
+    text-decoration: none;
+  }
+  .ou-user-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+    border: 1.5px solid rgba(255,255,255,.3);
+  }
+  .ou-user-info {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+  .ou-user-name {
+    font-size: 13px;
+    font-weight: 650;
+    color: #fff;
+  }
+  .ou-user-role {
+    font-size: 10px;
+    color: rgba(255,255,255,.55);
+    font-weight: 500;
+  }
+  .ou-user-caret {
+    font-size: 10px;
+    color: rgba(255,255,255,.5);
+    margin-left: 2px;
+  }
+
+  /* Dropdown */
+  .ou-dropdown-menu {
+    min-width: 200px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 8px 24px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.08);
+    padding: 6px;
+    background: var(--surface);
+    margin-top: 6px !important;
+  }
+  .ou-dropdown-header {
+    padding: 10px 12px 8px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 6px;
+  }
+  .ou-dropdown-header-name  { font-size: 13px; font-weight: 660; color: var(--text-primary); }
+  .ou-dropdown-header-email { font-size: 11.5px; color: var(--text-hint); margin-top: 1px; }
+  .ou-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: background .12s;
+    cursor: pointer;
+  }
+  .ou-dropdown-item:hover {
+    background: var(--bg);
+    color: var(--text-primary);
+    text-decoration: none;
+  }
+  .ou-dropdown-item i {
+    font-size: 13px;
+    color: var(--text-hint);
+    width: 16px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .ou-dropdown-item.danger       { color: var(--red); }
+  .ou-dropdown-item.danger:hover { background: #fce8e8; }
+  .ou-dropdown-item.danger i     { color: var(--red); }
+  .ou-dropdown-sep {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 5px 0;
+  }
+
+  /* Time display */
+  .ou-topbar-time {
+    font-size: 12px;
+    color: rgba(255,255,255,.55);
+    font-weight: 500;
+    letter-spacing: .02em;
+    white-space: nowrap;
+    display: none;
+  }
+  @media(min-width:1024px) { .ou-topbar-time { display: block; } }
+  @media(max-width:640px) {
+    .ou-topbar-brand-sub,
+    .ou-store-pill,
+    .ou-topbar-divider { display: none; }
+    .ou-user-info { display: none; }
+    .ou-topbar { padding: 0 12px; }
+  }
+  </style>
+
+  <script>
+    // Inline to avoid FOUC
+    function _ouTime() {
+      var el = document.getElementById('ou-live-time');
+      if (!el) return;
+      var now = new Date();
+      var h = now.getHours(), m = now.getMinutes();
+      var ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      el.textContent = (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm;
+    }
+    document.addEventListener('DOMContentLoaded', function() { _ouTime(); setInterval(_ouTime, 30000); });
+  </script>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════
+       TOP HEADER BAR
+  ═══════════════════════════════════════════ -->
+  <div class="ou-topbar">
+
+    <!-- Logo + Brand -->
+    <a class="ou-topbar-logo" href="{{ route('admin.dashboard') }}">
+      <img src="{{ asset('assets/img/corporate/Oudhyana_img/logo.png') }}" alt="Oudhyana">
+      <div class="ou-topbar-brand">
+        <span class="ou-topbar-brand-name">Oudhyana</span>
+        <span class="ou-topbar-brand-sub">Admin Panel</span>
+      </div>
+    </a>
+
+    <div class="ou-topbar-divider"></div>
+
+    <!-- Store status -->
+    <div class="ou-store-pill">
+      <span class="ou-store-dot"></span>
+      Store Live
+    </div>
+
+    <!-- Right actions -->
+    <div class="ou-topbar-right">
+
+      <!-- Live time -->
+      <span class="ou-topbar-time" id="ou-live-time">—</span>
+
+      <div class="ou-topbar-right-sep" style="margin:0 8px"></div>
+
+      <!-- Quick link: View Store -->
+      <a class="ou-icon-btn" href="{{ url('/') }}" target="_blank" title="View Store">
+        <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:13px"></i>
+      </a>
+
+      <!-- Notifications -->
+      <a class="ou-icon-btn" href="{{ url('admin/notifications') }}" title="Notifications">
+        <i class="fa-solid fa-bell"></i>
+        <span class="ou-notif-badge">3</span>
+      </a>
+
+      <!-- Settings shortcut -->
+      <a class="ou-icon-btn" href="{{ route('admin.admin-setting.index', ['tab' => 'general']) }}" title="Settings">
+        <i class="fa-solid fa-gear"></i>
+      </a>
+
+      <div class="ou-topbar-right-sep"></div>
+
+      <!-- User dropdown -->
+      <div class="btn-group">
+        <div class="ou-user-btn dropdown-toggle keep-open" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <div class="ou-user-avatar">A</div>
+          <div class="ou-user-info">
+            <span class="ou-user-name">Admin</span>
+            <span class="ou-user-role">Super Admin</span>
+          </div>
+          <i class="fa-solid fa-chevron-down ou-user-caret"></i>
+        </div>
+
+        <div class="dropdown-menu dropdown-menu-right keep-open ou-dropdown-menu">
+          <div class="ou-dropdown-header">
+            <div class="ou-dropdown-header-name">Administrator</div>
+            <div class="ou-dropdown-header-email">admin@oudhyana.com</div>
+          </div>
+
+          <a class="ou-dropdown-item" href="{{ url('admin/profile-setting') }}">
+            <i class="fa-solid fa-user"></i> My Profile
+          </a>
+          <a class="ou-dropdown-item" href="{{ route('admin.admin-setting.index', ['tab' => 'general']) }}">
+            <i class="fa-solid fa-gear"></i> Settings
+          </a>
+          <a class="ou-dropdown-item" href="{{ url('admin/activity-log') }}">
+            <i class="fa-solid fa-clock-rotate-left"></i> Activity Log
+          </a>
+
+          <hr class="ou-dropdown-sep">
+
+          <a class="ou-dropdown-item danger" href="{{ url('admin/logout') }}">
+            <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <!-- /TOP HEADER BAR -->
+
+  <script type="text/javascript">
+    jQuery('.dropdown-menu.keep-open').on('click', function(e) { e.stopPropagation(); });
+    if (1) { $('body').attr('tabindex', '0'); }
+    else { alertify.confirm().set({'reverseButtons': true}); alertify.prompt().set({'reverseButtons': true}); }
+  </script>
