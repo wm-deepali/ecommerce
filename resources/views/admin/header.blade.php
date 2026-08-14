@@ -81,31 +81,33 @@
         </li>
 
         {{-- CUSTOMER & ORDERS --}}
-<li class="{{ request()->routeIs(
+        <li class="{{ request()->routeIs(
     'admin.orders.*',
     'admin.transactions.*',
     'admin.returns.*',
     'admin.refunds.*',
-    'admin.customers.*'
+    'admin.customers.*',
+    'admin.ndr.*'
 ) ? 'active' : '' }}">
-    <a href="#"><i class="fa-solid fa-cart-shopping"></i> Customer & Orders</a>
-    <ul>
-        <li><a href="{{ route('admin.orders.index')}}">Manage Orders</a></li>
-                        <li><a href="{{ route('admin.orders.print-labels') }}">Print Label</a></li>
-        <li><a href="{{ route('admin.payments.index')}}">Payments & Transactions</a></li>
-        <li><a href="{{ route('admin.order-returns.index')}}">Manage Returns</a></li>
-        <li>
-            <a href="{{ route('admin.return-reasons.index') }}">
-                Return Reasons
-            </a>
+            <a href="#"><i class="fa-solid fa-cart-shopping"></i> Customer & Orders</a>
+            <ul>
+                <li><a href="{{ route('admin.orders.index')}}">Manage Orders</a></li>
+                <li><a href="{{ route('admin.orders.print-labels') }}">Print Label</a></li>
+                <li><a href="{{ route('admin.payments.index')}}">Payments & Transactions</a></li>
+                <li><a href="{{ route('admin.order-returns.index')}}">Manage Returns</a></li>
+                <li>
+                    <a href="{{ route('admin.return-reasons.index') }}">
+                        Return Reasons
+                    </a>
+                </li>
+                <li><a href="{{route('admin.refunds.index') }}">Manage Refunds</a></li>
+                <li><a href="{{ route('admin.ndr.index') }}">NDR Management</a></li>
+                <li><a href="{{ route('admin.customers.index') }}">Manage Customers</a></li>
+                <li><a href="{{ route('admin.customers.addresses.index') }}">Customer Address Book</a></li>
+                <li><a href="{{ route('admin.stored-carts.index') }}">Customer Carts</a></li>
+                <li><a href="{{ route('admin.customers.customer-wishlist') }}">Customer Wishlist</a></li>
+            </ul>
         </li>
-        <li><a href="{{route('admin.refunds.index') }}">Manage Refunds</a></li>
-        <li><a href="{{ route('admin.customers.index') }}">Manage Customers</a></li>
-        <li><a href="{{ route('admin.customers.addresses.index') }}">Customer Address Book</a></li>
-        <li><a href="{{ route('admin.stored-carts.index') }}">Customer Carts</a></li>
-         <li><a href="{{ route('admin.customers.customer-wishlist') }}">Customer Wishlist</a></li> 
-    </ul>
-</li>
 
         {{-- CONTENT MANAGEMENT --}}
         <li class="{{ request()->routeIs(
@@ -133,21 +135,21 @@
             </ul>
         </li>
 
-     {{-- ENQUIRIES --}}
-<li class="{{ request()->routeIs(
+        {{-- ENQUIRIES --}}
+        <li class="{{ request()->routeIs(
     'admin.contact-enquiries.*',
     'admin.other-enquiries.*',
     'admin.supplier-enquiries.*',
     'admin.coupon-enquiries.*'
 ) ? 'active' : '' }}">
-    <a href="#"><i class="fa-solid fa-envelope"></i> Enquiries</a>
-    <ul>
-        <li><a href="{{ route('admin.contact-enquiries.index') }}">Contact Us Enquiries</a></li>
-        <li><a href="{{ route('admin.supplier-enquiries.index') }}">Bulk Order Enquiries</a></li>
-        <li><a href="{{ route('admin.other-enquiries.index') }}">Other Enquiries</a></li>
-        <li><a href="{{ route('admin.coupon-enquiries.index') }}">Coupon Enquiries</a></li>
-    </ul>
-</li>
+            <a href="#"><i class="fa-solid fa-envelope"></i> Enquiries</a>
+            <ul>
+                <li><a href="{{ route('admin.contact-enquiries.index') }}">Contact Us Enquiries</a></li>
+                <li><a href="{{ route('admin.supplier-enquiries.index') }}">Bulk Order Enquiries</a></li>
+                <li><a href="{{ route('admin.other-enquiries.index') }}">Other Enquiries</a></li>
+                <li><a href="{{ route('admin.coupon-enquiries.index') }}">Coupon Enquiries</a></li>
+            </ul>
+        </li>
 
         {{-- MARKETING & SETTINGS --}}
         <li class="{{ request()->routeIs(
@@ -172,64 +174,64 @@
 
 
         {{-- Admin Setting --}}
-       {{-- Admin Setting --}}
-<li class="{{ request()->routeIs(
+        {{-- Admin Setting --}}
+        <li class="{{ request()->routeIs(
     'admin.settings.*',
     'admin.notifications.index',
     'admin.security.*'
 ) ? 'active' : '' }}">
-    <a href="#"><i class="fa-solid fa-gear"></i> Settings</a>
-    <ul>
+            <a href="#"><i class="fa-solid fa-gear"></i> Settings</a>
+            <ul>
 
-        <li><a href="{{ route('admin.admin-setting.index', ['tab' => 'general']) }}">General Setting</a></li>
-        <li><a href="{{ route('admin.admin-setting.index', ['tab' => 'payment']) }}">Payment Gateway</a></li>
-        <li><a href="{{ route('admin.admin-setting.index', ['tab' => 'smtp']) }}">SMTP</a></li>
-        <li>
-            <a href="{{ route('admin.settings.email-templates.index') }}">
-                Email Template Settings
-            </a>
+                <li><a href="{{ route('admin.admin-setting.index', ['tab' => 'general']) }}">General Setting</a></li>
+                <li><a href="{{ route('admin.admin-setting.index', ['tab' => 'payment']) }}">Payment Gateway</a></li>
+                <li><a href="{{ route('admin.admin-setting.index', ['tab' => 'smtp']) }}">SMTP</a></li>
+                <li>
+                    <a href="{{ route('admin.settings.email-templates.index') }}">
+                        Email Template Settings
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.admin-setting.index', ['tab' => 'gst']) }}">
+                        GST & Invoice
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.admin-setting.index', ['tab' => 'couriers']) }}">
+                        Courier Management
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.admin-setting.index', ['tab' => 'tracking']) }}">
+                        Tracking & Pixels
+                    </a>
+                </li>
+                <li><a href="{{ route('admin.notifications.index') }}">Notification Centre</a></li>
+                <li><a href="{{ route('admin.security.system-logs') }}">System Logs</a></li>
+                <li><a href="{{ route('admin.redirect-settings.index') }}">Re-Direction Setting</a></li>
+            </ul>
         </li>
-        <li>
-            <a href="{{ route('admin.admin-setting.index', ['tab' => 'gst']) }}">
-                GST & Invoice
-            </a>
-        </li>
-        <li>
-            <a href="{{ route('admin.admin-setting.index', ['tab' => 'couriers']) }}">
-                Courier Management
-            </a>
-        </li>
-         <li>
-            <a href="{{ route('admin.admin-setting.index', ['tab' => 'tracking']) }}">
-                Tracking & Pixels
-            </a>
-        </li>
-         <li><a href="{{ route('admin.notifications.index') }}">Notification Centre</a></li> 
-         <li><a href="{{ route('admin.security.system-logs') }}">System Logs</a></li> 
-         <li><a href="{{ route('admin.redirect-settings.index') }}">Re-Direction Setting</a></li> 
-    </ul>
-</li>
 
-{{-- ROLES & PERMISSION --}}
- <li class="{{ request()->routeIs(
+        {{-- ROLES & PERMISSION --}}
+        <li class="{{ request()->routeIs(
     'admin.roles-category.*',
     'admin.permission-settings.*',
     'admin.team.*'
 ) ? 'active' : '' }}">
-    <a href="#"><i class="fa-solid fa-user-shield"></i> Roles & Permission</a>
-    <ul>
-        <li><a href="{{ route('admin.roles-category.index') }}">Role Category</a></li>
-        <li><a href="{{ route('admin.permission-settings.index') }}">Roles Permission</a></li>
-        <li><a href="{{ route('admin.team.index') }}">Team Setup</a></li>
-        <li><a href="{{ route('admin.team.activity-logs') }}">Activity Logs</a></li>
-        <li><a href="{{ route('admin.team.login-summary') }}">Login Summary</a></li>
-    </ul>
-</li> 
+            <a href="#"><i class="fa-solid fa-user-shield"></i> Roles & Permission</a>
+            <ul>
+                <li><a href="{{ route('admin.roles-category.index') }}">Role Category</a></li>
+                <li><a href="{{ route('admin.permission-settings.index') }}">Roles Permission</a></li>
+                <li><a href="{{ route('admin.team.index') }}">Team Setup</a></li>
+                <li><a href="{{ route('admin.team.activity-logs') }}">Activity Logs</a></li>
+                <li><a href="{{ route('admin.team.login-summary') }}">Login Summary</a></li>
+            </ul>
+        </li>
 
 
 
-       {{-- REPORTS --}}
-<li class="{{ request()->routeIs(
+        {{-- REPORTS --}}
+        <li class="{{ request()->routeIs(
     'admin.sales-reports.*',
     'admin.product-reports.*',
     'admin.customer-reports.*',
@@ -237,16 +239,17 @@
     'admin.reports.coupon-reports',
     'admin.reports.tax-reports'
 ) ? 'active' : '' }}">
-    <a href="#"><i class="fa-solid fa-chart-column"></i> Reports</a>
-    <ul>
-        <li><a href="{{ route('admin.reports.sales') }}">Sales Report</a></li>
-        <li><a href="{{ route('admin.reports.products') }}">Product Report</a></li>
-        <li><a href="{{ route('admin.reports.customers') }}">Customer Report</a></li>
-         <li><a href="{{ route('admin.reports.order-reports') }}">Order Reports</a></li> 
-         <li><a href="{{ route('admin.reports.coupon-reports') }}">Coupon Reports</a></li> 
-         <li><a href="{{ route('admin.reports.tax-reports') }}">Tax Reports</a></li> 
-    </ul>
-</li>
+            <a href="#"><i class="fa-solid fa-chart-column"></i> Reports</a>
+            <ul>
+                <li><a href="{{ route('admin.reports.sales') }}">Sales Report</a></li>
+                <li><a href="{{ route('admin.reports.products') }}">Product Report</a></li>
+                <li><a href="{{ route('admin.reports.customers') }}">Customer Report</a></li>
+                <li><a href="{{ route('admin.reports.order-reports') }}">Order Reports</a></li>
+                <li><a href="{{ route('admin.reports.coupon-reports') }}">Coupon Reports</a></li>
+                <li><a href="{{ route('admin.reports.tax-reports') }}">Tax Reports</a></li>
+                <li><a href="{{ route('admin.reports.ndr') }}">NDR Report</a></li>
+            </ul>
+        </li>
 
 
     </ul>

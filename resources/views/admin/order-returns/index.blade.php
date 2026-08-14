@@ -218,7 +218,7 @@
                                 </td>
                                 <td style="font-size:13px;max-width:160px">{{ $return->orderItem->product->name ?? '—' }}</td>
                                 <td style="color:var(--text-secondary);font-size:12.5px">{{ $return->returnReason->title ?? $return->details ?? '—' }}</td>
-                                <td style="font-weight:700">₹{{ number_format($return->orderItem->price ?? 0, 0) }}</td>
+                                <td style="font-weight:700">₹{{ number_format($return->refundable_amount, 0) }}</td>
                                 <td>
                                     @php
                                         $pillMap = ['pending'=>'pill-pending','approved'=>'pill-approved','rejected'=>'pill-rejected','completed'=>'pill-refunded'];
@@ -255,9 +255,11 @@
                                                 refund destination (order_returns columns, never touched
                                                 by the admin refund() action). Js::from() escapes it safely
                                                 for embedding inside an inline onclick handler.
+                                                The 4th argument (amount) now uses refundable_amount —
+                                                item total + addons + proportional tax — not just item price.
                                             --}}
                                             <button class="action-btn refund"
-                                                    onclick="openRefundModal({{ $return->id }}, '{{ addslashes($return->customer->name) }}', '{{ addslashes($return->orderItem->product->name ?? '') }}', {{ $return->orderItem->price ?? 0 }}, {{ \Illuminate\Support\Js::from([
+                                                    onclick="openRefundModal({{ $return->id }}, '{{ addslashes($return->customer->name) }}', '{{ addslashes($return->orderItem->product->name ?? '') }}', {{ $return->refundable_amount }}, {{ \Illuminate\Support\Js::from([
                                                         'method' => $return->refund_method,
                                                         'upi_id' => $return->upi_id,
                                                         'bank_name' => $return->bank_name,
@@ -317,7 +319,6 @@
     </div>
 
     @include('admin.order-returns._modals')
-
 
 </div>
 

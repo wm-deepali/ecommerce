@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Models\AuthLog;
+use App\Models\Cart;
 
 class CustomerReportController extends Controller
 {
@@ -24,15 +26,15 @@ class CustomerReportController extends Controller
     {
         $now = now();
         return match ($range) {
-            'today'      => [$now->copy()->startOfDay(), $now->copy()->endOfDay()],
-            'this_week'  => [$now->copy()->startOfWeek(), $now->copy()->endOfDay()],
+            'today' => [$now->copy()->startOfDay(), $now->copy()->endOfDay()],
+            'this_week' => [$now->copy()->startOfWeek(), $now->copy()->endOfDay()],
             'last_month' => [$now->copy()->subMonth()->startOfMonth(), $now->copy()->subMonth()->endOfMonth()],
-            'this_year'  => [$now->copy()->startOfYear(), $now->copy()->endOfDay()],
-            'custom'     => [
+            'this_year' => [$now->copy()->startOfYear(), $now->copy()->endOfDay()],
+            'custom' => [
                 Carbon::parse(request('start_date'))->startOfDay(),
                 Carbon::parse(request('end_date'))->endOfDay(),
             ],
-            default      => [$now->copy()->startOfMonth(), $now->copy()->endOfDay()], // this_month
+            default => [$now->copy()->startOfMonth(), $now->copy()->endOfDay()], // this_month
         };
     }
 
@@ -88,8 +90,11 @@ class CustomerReportController extends Controller
         $prevEnd = $start->copy()->subSecond();
         $prevStart = $prevEnd->copy()->subDays($days - 1)->startOfDay();
 
-        // ── Per-customer order aggregates (paid orders only) ──
+        // ── Per-customer order aggregates (paid orders only, excluding
+        // cancelled/RTO — those didn't result in retained revenue, so they
+        // shouldn't inflate LTV, VIP threshold, or segment classification) ──
         $stats = Order::where('payment_status', 'paid')
+            ->whereNotIn('status', ['cancelled', 'rto'])
             ->whereNotNull('customer_id')
             ->select(
                 'customer_id',
@@ -116,11 +121,13 @@ class CustomerReportController extends Controller
 
         // ── KPI: Returning Rate (of those who ordered this period) ─
         $orderedThisPeriod = Order::where('payment_status', 'paid')
+            ->whereNotIn('status', ['cancelled', 'rto'])
             ->whereBetween('created_at', [$start, $end])
             ->whereNotNull('customer_id')
             ->select('customer_id')->distinct()->pluck('customer_id');
 
         $returningCount = Order::where('payment_status', 'paid')
+            ->whereNotIn('status', ['cancelled', 'rto'])
             ->where('created_at', '<', $start)
             ->whereIn('customer_id', $orderedThisPeriod)
             ->select('customer_id')->distinct()->count('customer_id');
@@ -130,14 +137,17 @@ class CustomerReportController extends Controller
 
         // Prev period, for the trend badge
         $orderedPrevPeriod = Order::where('payment_status', 'paid')
+            ->whereNotIn('status', ['cancelled', 'rto'])
             ->whereBetween('created_at', [$prevStart, $prevEnd])
             ->whereNotNull('customer_id')
             ->select('customer_id')->distinct()->pluck('customer_id');
 
         $returningPrevCount = Order::where('payment_status', 'paid')
+            ->whereNotIn('status', ['cancelled', 'rto'])
             ->where('created_at', '<', $prevStart)
             ->whereIn('customer_id', $orderedPrevPeriod)
             ->select('customer_id')->distinct()->count('customer_id');
+
 
         $returningRatePrev = $orderedPrevPeriod->count() > 0
             ? round(($returningPrevCount / $orderedPrevPeriod->count()) * 100, 1) : 0;
@@ -153,7 +163,7 @@ class CustomerReportController extends Controller
         $atRiskCutoff = now()->subDays(self::AT_RISK_DAYS);
         $newCutoff = now()->subDays(self::NEW_DAYS);
 
-        $churnedCount = $stats->filter(fn ($s) => Carbon::parse($s->last_order_at)->lt($churnCutoff))->count();
+        $churnedCount = $stats->filter(fn($s) => Carbon::parse($s->last_order_at)->lt($churnCutoff))->count();
         $churnRate = $customersWithOrders > 0 ? round(($churnedCount / $customersWithOrders) * 100, 1) : 0;
 
         // ── Acquisition trend (daily, this period) ─────────────
@@ -162,8 +172,16 @@ class CustomerReportController extends Controller
             ->groupBy('d')->pluck('cnt', 'd');
 
         $returningDaily = Order::where('payment_status', 'paid')
-            ->where('created_at', '<', DB::raw('orders.created_at')) // placeholder, replaced below
+            ->whereNotIn('status', ['cancelled', 'rto'])
             ->whereBetween('created_at', [$start, $end])
+            ->whereIn('customer_id', function ($q) {
+                $q->select('customer_id')
+                    ->from('orders')
+                    ->where('payment_status', 'paid')
+                    ->whereNotIn('status', ['cancelled', 'rto'])
+                    ->groupBy('customer_id')
+                    ->havingRaw('COUNT(*) > 1');
+            })
             ->select(DB::raw('DATE(created_at) as d'), DB::raw('COUNT(DISTINCT customer_id) as cnt'))
             ->groupBy('d')->pluck('cnt', 'd');
         // Note: "returning" per day is approximated as distinct customers ordering that day
@@ -203,7 +221,7 @@ class CustomerReportController extends Controller
         }
 
         $segmentTotal = array_sum($segments) ?: 1;
-        $segmentPcts = array_map(fn ($v) => round(($v / $segmentTotal) * 100, 1), $segments);
+        $segmentPcts = array_map(fn($v) => round(($v / $segmentTotal) * 100, 1), $segments);
 
         // ── Acquisition Funnel (4 real steps only) ─────────────
         $signedUp = Customer::count();
@@ -213,13 +231,13 @@ class CustomerReportController extends Controller
             ->distinct()
             ->count('carts.user_id');
         $purchased = $stats->count();
-        $repeatPurchase = $stats->filter(fn ($s) => $s->orders_count > 1)->count();
+        $repeatPurchase = $stats->filter(fn($s) => $s->orders_count > 1)->count();
 
         $funnelMax = $signedUp ?: 1;
         $funnel = [
-            ['label' => 'Signed Up',       'count' => $signedUp,       'pct' => 100],
-            ['label' => 'Added to Cart',   'count' => $addedToCart,    'pct' => round(($addedToCart / $funnelMax) * 100)],
-            ['label' => 'Purchased',       'count' => $purchased,      'pct' => round(($purchased / $funnelMax) * 100)],
+            ['label' => 'Signed Up', 'count' => $signedUp, 'pct' => 100],
+            ['label' => 'Added to Cart', 'count' => $addedToCart, 'pct' => round(($addedToCart / $funnelMax) * 100)],
+            ['label' => 'Purchased', 'count' => $purchased, 'pct' => round(($purchased / $funnelMax) * 100)],
             ['label' => 'Repeat Purchase', 'count' => $repeatPurchase, 'pct' => round(($repeatPurchase / $funnelMax) * 100)],
         ];
 
@@ -234,6 +252,7 @@ class CustomerReportController extends Controller
             $cohortEnd = $cohortStart->copy()->endOfMonth();
 
             $cohortCustomerIds = Order::where('payment_status', 'paid')
+                ->whereNotIn('status', ['cancelled', 'rto'])
                 ->whereNotNull('customer_id')
                 ->select('customer_id', DB::raw('MIN(created_at) as first_order'))
                 ->groupBy('customer_id')
@@ -260,6 +279,7 @@ class CustomerReportController extends Controller
                 $windowEnd = $windowStart->copy()->endOfMonth();
 
                 $returnedCount = Order::where('payment_status', 'paid')
+                    ->whereNotIn('status', ['cancelled', 'rto'])
                     ->whereIn('customer_id', $cohortCustomerIds)
                     ->whereBetween('created_at', [$windowStart, $windowEnd])
                     ->select('customer_id')->distinct()->count('customer_id');
@@ -317,6 +337,7 @@ class CustomerReportController extends Controller
 
         // ── Customer Health Metrics ──────────────────────────────
         $activeThisMonth = Order::where('payment_status', 'paid')
+            ->whereNotIn('status', ['cancelled', 'rto'])
             ->whereBetween('created_at', [now()->startOfMonth(), now()])
             ->whereNotNull('customer_id')
             ->select('customer_id')->distinct()->count('customer_id');
@@ -326,10 +347,65 @@ class CustomerReportController extends Controller
         $avgOrdersPerCustomer = $customersWithOrders > 0
             ? round($stats->sum('orders_count') / $customersWithOrders, 1) : 0;
 
-        $avgDaysBetweenOrders = $stats->filter(fn ($s) => $s->orders_count > 1)
-            ->map(fn ($s) => Carbon::parse($s->first_order_at)->diffInDays(Carbon::parse($s->last_order_at)) / max($s->orders_count - 1, 1))
+        $avgDaysBetweenOrders = $stats->filter(fn($s) => $s->orders_count > 1)
+            ->map(fn($s) => Carbon::parse($s->first_order_at)->diffInDays(Carbon::parse($s->last_order_at)) / max($s->orders_count - 1, 1))
             ->avg();
         $avgDaysBetweenOrders = $avgDaysBetweenOrders ? round($avgDaysBetweenOrders) : 0;
+
+        // ── Session Duration (real, from AuthLog login/logout pairs) ──
+        // Only counts sessions with an explicit logout event — a customer who
+        // closes the tab or lets the session expire leaves no logout row and
+        // is excluded, not counted as zero. This is an average over TRACKED
+        // sessions, not all sessions; there's no way around that with what
+        // AuthLog records.
+        $authLogs = AuthLog::where('user_type', 'customer')
+            ->whereIn('event', ['login', 'logout'])
+            ->where('status', 'success')
+            ->whereBetween('created_at', [$start, $end])
+            ->orderBy('email')
+            ->orderBy('created_at')
+            ->get();
+
+        $sessionDurationsSecs = collect();
+        $openLogins = [];
+
+        foreach ($authLogs as $log) {
+            if ($log->event === 'login') {
+                $openLogins[$log->email] = $log->created_at;
+            } elseif ($log->event === 'logout' && isset($openLogins[$log->email])) {
+                $duration = $openLogins[$log->email]->diffInSeconds($log->created_at);
+
+                // Sanity cap: a "session" over 12 hours is almost certainly a
+                // stale login with no real logout (e.g. browser left open
+                // overnight) — exclude it rather than let it skew the average.
+                if ($duration > 0 && $duration <= 43200) {
+                    $sessionDurationsSecs->push($duration);
+                }
+
+                unset($openLogins[$log->email]);
+            }
+        }
+
+        $trackedSessionsCount = $sessionDurationsSecs->count();
+        $avgSessionSecs = $trackedSessionsCount > 0 ? (int) round($sessionDurationsSecs->avg()) : null;
+        $avgSessionLabel = $avgSessionSecs !== null
+            ? intdiv($avgSessionSecs, 60) . 'm ' . ($avgSessionSecs % 60) . 's'
+            : '—';
+
+        // ── Cart Abandonment Rate (real, from stored carts vs orders placed) ──
+        // Standard e-commerce approximation: abandoned / (abandoned + converted).
+        // Valid because Cart rows are deleted on successful checkout — a Cart
+        // still sitting here with items means checkout was never completed.
+        $abandonedCartsCount = Cart::whereNotNull('user_id')
+            ->where(fn($q) => $q->where('grand_total', '>', 0)->orWhere('total_amount', '>', 0))
+            ->whereBetween('updated_at', [$start, $end])
+            ->count();
+
+        $ordersPlacedCount = \App\Models\Order::whereBetween('created_at', [$start, $end])->count();
+
+        $cartAbandonmentRate = ($abandonedCartsCount + $ordersPlacedCount) > 0
+            ? round(($abandonedCartsCount / ($abandonedCartsCount + $ordersPlacedCount)) * 100, 1)
+            : 0;
 
         // ── Churn vs Retention trend (last 6 months) ────────────
         $churnTrendLabels = [];
@@ -340,6 +416,7 @@ class CustomerReportController extends Controller
             $churnTrendLabels[] = $m->format('M');
 
             $activeInMonth = Order::where('payment_status', 'paid')
+                ->whereNotIn('status', ['cancelled', 'rto'])
                 ->whereYear('created_at', $m->year)->whereMonth('created_at', $m->month)
                 ->whereNotNull('customer_id')->select('customer_id')->distinct()->count('customer_id');
 
@@ -352,26 +429,45 @@ class CustomerReportController extends Controller
         }
 
         return [
-            'totalCustomers' => $totalCustomers, 'totalGrowth' => $totalGrowth,
-            'newThis' => $newThis, 'newGrowth' => $newGrowth,
-            'returningRate' => $returningRate, 'returningRateDelta' => $returningRateDelta,
+            'totalCustomers' => $totalCustomers,
+            'totalGrowth' => $totalGrowth,
+            'newThis' => $newThis,
+            'newGrowth' => $newGrowth,
+            'returningRate' => $returningRate,
+            'returningRateDelta' => $returningRateDelta,
             'avgLtv' => $avgLtv,
             'churnRate' => $churnRate,
-            'acqLabels' => $acqLabels, 'acqNewSeries' => $acqNewSeries, 'acqReturningSeries' => $acqReturningSeries,
-            'newOrderersCount' => $newOrderersCount, 'returningOrderersCount' => $returningOrderersCount,
-            'newPct' => $newPct, 'returningPct' => $returningPct,
-            'segments' => $segments, 'segmentPcts' => $segmentPcts,
+            'acqLabels' => $acqLabels,
+            'acqNewSeries' => $acqNewSeries,
+            'acqReturningSeries' => $acqReturningSeries,
+            'newOrderersCount' => $newOrderersCount,
+            'returningOrderersCount' => $returningOrderersCount,
+            'newPct' => $newPct,
+            'returningPct' => $returningPct,
+            'segments' => $segments,
+            'segmentPcts' => $segmentPcts,
             'funnel' => $funnel,
             'cohorts' => $cohorts,
             'allCustomersTable' => $allCustomersTable,
             'topCustomersTable' => $topCustomersTable,
-            'top6Orders' => $top6Orders, 'top6Revenue' => $top6Revenue,
-            'topLocations' => $topLocations, 'othersLocationCount' => $othersLocationCount,
-            'locationTotal' => $locationTotal, 'maxLocationCount' => $maxLocationCount,
-            'activeThisMonth' => $activeThisMonth, 'activePct' => $activePct,
+            'top6Orders' => $top6Orders,
+            'top6Revenue' => $top6Revenue,
+            'topLocations' => $topLocations,
+            'othersLocationCount' => $othersLocationCount,
+            'locationTotal' => $locationTotal,
+            'maxLocationCount' => $maxLocationCount,
+            'activeThisMonth' => $activeThisMonth,
+            'activePct' => $activePct,
             'avgOrdersPerCustomer' => $avgOrdersPerCustomer,
             'avgDaysBetweenOrders' => $avgDaysBetweenOrders,
-            'churnTrendLabels' => $churnTrendLabels, 'retainedSeries' => $retainedSeries, 'churnedSeries' => $churnedSeries,
+            'churnTrendLabels' => $churnTrendLabels,
+            'retainedSeries' => $retainedSeries,
+            'churnedSeries' => $churnedSeries,
+            'avgSessionLabel' => $avgSessionLabel,
+            'trackedSessionsCount' => $trackedSessionsCount,
+            'cartAbandonmentRate' => $cartAbandonmentRate,
+            'abandonedCartsCount' => $abandonedCartsCount,
+            'ordersPlacedCount' => $ordersPlacedCount,
         ];
     }
 
@@ -406,7 +502,8 @@ class CustomerReportController extends Controller
 
     private function percentChange($old, $new): float
     {
-        if ($old <= 0) return $new > 0 ? 100.0 : 0.0;
+        if ($old <= 0)
+            return $new > 0 ? 100.0 : 0.0;
         return round((($new - $old) / $old) * 100, 1);
     }
 }

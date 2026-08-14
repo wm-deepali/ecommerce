@@ -21,15 +21,15 @@ class ProductReportController extends Controller
     {
         $now = now();
         return match ($range) {
-            '7days'   => [$now->copy()->subDays(6)->startOfDay(),  $now->copy()->endOfDay()],
+            '7days' => [$now->copy()->subDays(6)->startOfDay(), $now->copy()->endOfDay()],
             '3months' => [$now->copy()->subMonths(3)->startOfDay(), $now->copy()->endOfDay()],
             '6months' => [$now->copy()->subMonths(6)->startOfDay(), $now->copy()->endOfDay()],
-            'year'    => [$now->copy()->startOfYear()->startOfDay(), $now->copy()->endOfDay()],
-            'custom'  => [
+            'year' => [$now->copy()->startOfYear()->startOfDay(), $now->copy()->endOfDay()],
+            'custom' => [
                 Carbon::parse(request('start_date'))->startOfDay(),
                 Carbon::parse(request('end_date'))->endOfDay(),
             ],
-            default   => [$now->copy()->subDays(29)->startOfDay(), $now->copy()->endOfDay()], // 30days
+            default => [$now->copy()->subDays(29)->startOfDay(), $now->copy()->endOfDay()], // 30days
         };
     }
 
@@ -44,12 +44,12 @@ class ProductReportController extends Controller
     public function index(Request $request)
     {
         // ── Filters ──────────────────────────────────────────
-        $range      = $request->input('range', '30days');
-        $search     = $request->input('search', '');
+        $range = $request->input('range', '30days');
+        $search = $request->input('search', '');
         $categoryId = $request->input('category_id', '');
-        $status     = $request->input('status', '');
-        $sortBy     = $request->input('sort_by', 'revenue');
-        $perPage    = (int) $request->input('per_page', 15);
+        $status = $request->input('status', '');
+        $sortBy = $request->input('sort_by', 'revenue');
+        $perPage = (int) $request->input('per_page', 15);
 
         [$start, $end] = $this->resolveRange($range);
         [$prevStart, $prevEnd] = $this->prevRange($start, $end);
@@ -75,11 +75,11 @@ class ProductReportController extends Controller
 
     public function exportCsv(Request $request)
     {
-        $range      = $request->input('range', '30days');
-        $search     = $request->input('search', '');
+        $range = $request->input('range', '30days');
+        $search = $request->input('search', '');
         $categoryId = $request->input('category_id', '');
-        $status     = $request->input('status', '');
-        $sortBy     = $request->input('sort_by', 'revenue');
+        $status = $request->input('status', '');
+        $sortBy = $request->input('sort_by', 'revenue');
 
         [$start, $end] = $this->resolveRange($range);
         [$prevStart, $prevEnd] = $this->prevRange($start, $end);
@@ -87,7 +87,7 @@ class ProductReportController extends Controller
         $products = $this->buildProductsQuery($start, $end, $prevStart, $prevEnd, $search, $categoryId, $status, $sortBy)
             ->get()
             ->values()
-            ->map(fn ($p, $i) => $this->decorateProduct($p, $i + 1));
+            ->map(fn($p, $i) => $this->decorateProduct($p, $i + 1));
 
         $filename = 'product-report-' . $start->format('Y-m-d') . '-to-' . $end->format('Y-m-d') . '.csv';
 
@@ -96,11 +96,11 @@ class ProductReportController extends Controller
 
     public function exportPdf(Request $request)
     {
-        $range      = $request->input('range', '30days');
-        $search     = $request->input('search', '');
+        $range = $request->input('range', '30days');
+        $search = $request->input('search', '');
         $categoryId = $request->input('category_id', '');
-        $status     = $request->input('status', '');
-        $sortBy     = $request->input('sort_by', 'revenue');
+        $status = $request->input('status', '');
+        $sortBy = $request->input('sort_by', 'revenue');
 
         [$start, $end] = $this->resolveRange($range);
         [$prevStart, $prevEnd] = $this->prevRange($start, $end);
@@ -110,7 +110,7 @@ class ProductReportController extends Controller
         $products = $this->buildProductsQuery($start, $end, $prevStart, $prevEnd, $search, $categoryId, $status, $sortBy)
             ->get()
             ->values()
-            ->map(fn ($p, $i) => $this->decorateProduct($p, $i + 1));
+            ->map(fn($p, $i) => $this->decorateProduct($p, $i + 1));
 
         $categoryName = $categoryId ? Category::find($categoryId)?->name : null;
 
@@ -132,17 +132,19 @@ class ProductReportController extends Controller
     private function buildReportData(Carbon $start, Carbon $end, Carbon $prevStart, Carbon $prevEnd): array
     {
         // ── KPI: Total Products ───────────────────────────────
-        $totalProducts    = Product::count();
+        $totalProducts = Product::count();
         $newProductsCount = Product::whereBetween('created_at', [$start, $end])->count();
 
         // ── KPI: Total Units Sold ─────────────────────────────
         $unitsThis = (int) OrderItem::join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('orders.payment_status', 'paid')
+            ->whereNotIn('orders.status', ['cancelled', 'rto'])
             ->whereBetween('orders.created_at', [$start, $end])
             ->sum('order_items.quantity');
 
         $unitsPrev = (int) OrderItem::join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('orders.payment_status', 'paid')
+            ->whereNotIn('orders.status', ['cancelled', 'rto'])
             ->whereBetween('orders.created_at', [$prevStart, $prevEnd])
             ->sum('order_items.quantity');
 
@@ -151,18 +153,20 @@ class ProductReportController extends Controller
         // ── KPI: Total Revenue ────────────────────────────────
         $revenueThis = (float) OrderItem::join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('orders.payment_status', 'paid')
+            ->whereNotIn('orders.status', ['cancelled', 'rto'])
             ->whereBetween('orders.created_at', [$start, $end])
             ->sum('order_items.total');
 
         $revenuePrev = (float) OrderItem::join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('orders.payment_status', 'paid')
+            ->whereNotIn('orders.status', ['cancelled', 'rto'])
             ->whereBetween('orders.created_at', [$prevStart, $prevEnd])
             ->sum('order_items.total');
 
         $revenueGrowth = $this->percentChange($revenuePrev, $revenueThis);
 
         // ── KPI: Out of Stock ─────────────────────────────────
-        $outOfStockNow  = Product::where('stock', '<=', 0)->count();
+        $outOfStockNow = Product::where('stock', '<=', 0)->count();
         $outOfStockPrev = Product::where('stock', '<=', 0)
             ->where('updated_at', '<', $start)->count();
         $outOfStockDelta = $outOfStockNow - $outOfStockPrev;
@@ -170,6 +174,7 @@ class ProductReportController extends Controller
         // ── Bar chart: top 8 products by units ────────────────
         $topBarProducts = OrderItem::join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('orders.payment_status', 'paid')
+            ->whereNotIn('orders.status', ['cancelled', 'rto'])
             ->whereBetween('orders.created_at', [$start, $end])
             ->select('order_items.product_name', DB::raw('SUM(order_items.quantity) as units'))
             ->groupBy('order_items.product_id', 'order_items.product_name')
@@ -181,10 +186,11 @@ class ProductReportController extends Controller
 
         // ── Revenue trend (monthly, last 12 months) ───────────
         $trendStart = now()->subMonths(11)->startOfMonth()->startOfDay();
-        $trendEnd   = now()->endOfMonth()->endOfDay();
+        $trendEnd = now()->endOfMonth()->endOfDay();
 
         $monthlyRevenue = OrderItem::join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('orders.payment_status', 'paid')
+            ->whereNotIn('orders.status', ['cancelled', 'rto'])
             ->whereBetween('orders.created_at', [$trendStart, $trendEnd])
             ->select(
                 DB::raw("DATE_FORMAT(orders.created_at, '%Y-%m') as month_key"),
@@ -196,13 +202,13 @@ class ProductReportController extends Controller
 
         $trendLabels = [];
         $trendSeries = [];
-        $maxRevenue  = 0;
+        $maxRevenue = 0;
         for ($m = $trendStart->copy(); $m->lte(now()->startOfMonth()); $m->addMonth()) {
-            $key           = $m->format('Y-m');
-            $val           = (float) ($monthlyRevenue[$key] ?? 0);
+            $key = $m->format('Y-m');
+            $val = (float) ($monthlyRevenue[$key] ?? 0);
             $trendLabels[] = $m->format('M');
             $trendSeries[] = $val;
-            $maxRevenue    = max($maxRevenue, $val);
+            $maxRevenue = max($maxRevenue, $val);
         }
 
         $trendPoints = $this->buildSvgPolyline($trendSeries, $maxRevenue, 700, 130);
@@ -222,6 +228,7 @@ class ProductReportController extends Controller
             ->join('products', 'products.id', '=', 'order_items.product_id')
             ->leftJoin('categories', 'categories.id', '=', 'products.category_id')
             ->where('orders.payment_status', 'paid')
+            ->whereNotIn('orders.status', ['cancelled', 'rto'])
             ->whereBetween('orders.created_at', [$start, $end])
             ->select('categories.name as category_name', DB::raw('SUM(order_items.total) as revenue'))
             ->groupBy('categories.id', 'categories.name')
@@ -230,35 +237,35 @@ class ProductReportController extends Controller
 
         $totalCatRevenue = (float) $categoryRevRaw->sum('revenue') ?: 1;
 
-        $donutColors      = ['#303d89', '#0069d9', '#007a5e', '#f59e0b', '#e3e5e8'];
-        $donutCategories  = collect();
-        $circumference    = 2 * M_PI * 40;
+        $donutColors = ['#303d89', '#0069d9', '#007a5e', '#f59e0b', '#e3e5e8'];
+        $donutCategories = collect();
+        $circumference = 2 * M_PI * 40;
 
-        $top4Cat      = $categoryRevRaw->take(4);
+        $top4Cat = $categoryRevRaw->take(4);
         $othersRevCat = $categoryRevRaw->skip(4)->sum('revenue');
 
         foreach ($top4Cat as $i => $cat) {
             $donutCategories->push([
-                'name'    => $cat->category_name ?: 'Uncategorized',
+                'name' => $cat->category_name ?: 'Uncategorized',
                 'revenue' => (float) $cat->revenue,
-                'pct'     => round(($cat->revenue / $totalCatRevenue) * 100),
-                'color'   => $donutColors[$i],
+                'pct' => round(($cat->revenue / $totalCatRevenue) * 100),
+                'color' => $donutColors[$i],
             ]);
         }
         if ($othersRevCat > 0) {
             $donutCategories->push([
-                'name'    => 'Others',
+                'name' => 'Others',
                 'revenue' => (float) $othersRevCat,
-                'pct'     => round(($othersRevCat / $totalCatRevenue) * 100),
-                'color'   => $donutColors[4],
+                'pct' => round(($othersRevCat / $totalCatRevenue) * 100),
+                'color' => $donutColors[4],
             ]);
         }
 
         $offset = 0;
         $donutSegments = $donutCategories->map(function ($cat) use ($circumference, &$offset) {
-            $arc    = ($cat['pct'] / 100) * $circumference;
-            $gap    = $circumference - $arc;
-            $seg    = ['dash' => "{$arc} {$gap}", 'offset' => -$offset, 'color' => $cat['color']];
+            $arc = ($cat['pct'] / 100) * $circumference;
+            $gap = $circumference - $arc;
+            $seg = ['dash' => "{$arc} {$gap}", 'offset' => -$offset, 'color' => $cat['color']];
             $offset += $arc;
             return array_merge($cat, $seg);
         });
@@ -273,16 +280,19 @@ class ProductReportController extends Controller
 
         // ── Key Metrics ────────────────────────────────────────
         $avgRevenuePerProduct = $totalProducts > 0 ? round($revenueThis / $totalProducts) : 0;
-        $avgUnitsPerProduct   = $totalProducts > 0 ? round($unitsThis / $totalProducts, 1) : 0;
+        $avgUnitsPerProduct = $totalProducts > 0 ? round($unitsThis / $totalProducts, 1) : 0;
 
         $avgRating = round(DB::table('product_reviews')->avg('rating') ?? 0, 1);
 
-        $returnsCount     = OrderReturn::whereBetween('created_at', [$start, $end])->count();
-        $totalOrdersCount = Order::where('payment_status', 'paid')->whereBetween('created_at', [$start, $end])->count();
-        $returnRate       = $totalOrdersCount > 0 ? round(($returnsCount / $totalOrdersCount) * 100, 1) : 0;
+        $returnsCount = OrderReturn::whereBetween('created_at', [$start, $end])->count();
+        $totalOrdersCount = Order::where('payment_status', 'paid')
+            ->whereNotIn('status', ['cancelled', 'rto'])
+            ->whereBetween('created_at', [$start, $end])
+            ->count();
+        $returnRate = $totalOrdersCount > 0 ? round(($returnsCount / $totalOrdersCount) * 100, 1) : 0;
 
         $productsWithReviews = Product::has('reviews')->count();
-        $reviewedPct         = $totalProducts > 0 ? round(($productsWithReviews / $totalProducts) * 100) : 0;
+        $reviewedPct = $totalProducts > 0 ? round(($productsWithReviews / $totalProducts) * 100) : 0;
 
         // Placeholder until real page-view tracking exists.
         $conversionRate = $totalOrdersCount > 0 ? round(($totalOrdersCount / max($totalOrdersCount * 26, 1)) * 100, 1) : 0;
@@ -296,16 +306,30 @@ class ProductReportController extends Controller
             ->get();
 
         return compact(
-            'totalProducts', 'newProductsCount',
-            'unitsThis', 'unitsGrowth',
-            'revenueThis', 'revenueGrowth',
-            'outOfStockNow', 'outOfStockDelta',
-            'topBarProducts', 'maxUnits',
-            'trendLabels', 'trendSeries', 'trendPoints', 'trendCoords',
-            'donutCategories', 'donutSegments', 'totalCatRevenue',
-            'categoryProductCounts', 'maxCatCount',
-            'avgRevenuePerProduct', 'avgUnitsPerProduct',
-            'avgRating', 'returnRate', 'reviewedPct',
+            'totalProducts',
+            'newProductsCount',
+            'unitsThis',
+            'unitsGrowth',
+            'revenueThis',
+            'revenueGrowth',
+            'outOfStockNow',
+            'outOfStockDelta',
+            'topBarProducts',
+            'maxUnits',
+            'trendLabels',
+            'trendSeries',
+            'trendPoints',
+            'trendCoords',
+            'donutCategories',
+            'donutSegments',
+            'totalCatRevenue',
+            'categoryProductCounts',
+            'maxCatCount',
+            'avgRevenuePerProduct',
+            'avgUnitsPerProduct',
+            'avgRating',
+            'returnRate',
+            'reviewedPct',
             'conversionRate',
             'topRated'
         );
@@ -326,8 +350,9 @@ class ProductReportController extends Controller
         string $status,
         string $sortBy
     ) {
-        $salesSubquery = OrderItem::join('orders', 'orders.id', '=', 'order_items.order_id')
+       $salesSubquery = OrderItem::join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('orders.payment_status', 'paid')
+            ->whereNotIn('orders.status', ['cancelled', 'rto'])
             ->whereBetween('orders.created_at', [$start, $end])
             ->select(
                 'order_items.product_id',
@@ -339,6 +364,7 @@ class ProductReportController extends Controller
 
         $prevSalesSubquery = OrderItem::join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('orders.payment_status', 'paid')
+            ->whereNotIn('orders.status', ['cancelled', 'rto'])
             ->whereBetween('orders.created_at', [$prevStart, $prevEnd])
             ->select('order_items.product_id', DB::raw('SUM(order_items.total) as prev_revenue'))
             ->groupBy('order_items.product_id');
@@ -349,7 +375,7 @@ class ProductReportController extends Controller
             ->leftJoin('categories', 'categories.id', '=', 'products.category_id')
             ->leftJoin('product_images as default_img', function ($join) {
                 $join->on('default_img.product_id', '=', 'products.id')
-                     ->where('default_img.is_default', 1);
+                    ->where('default_img.is_default', 1);
             })
             ->withAvg('reviews', 'rating')
             ->select(
@@ -369,7 +395,7 @@ class ProductReportController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('products.name', 'like', "%{$search}%")
-                  ->orWhere('products.sku', 'like', "%{$search}%");
+                    ->orWhere('products.sku', 'like', "%{$search}%");
             });
         }
 
@@ -388,12 +414,12 @@ class ProductReportController extends Controller
         }
 
         $query->orderBy(match ($sortBy) {
-            'units'  => 'units_sold',
+            'units' => 'units_sold',
             'orders' => 'order_count',
-            'stock'  => 'products.stock',
+            'stock' => 'products.stock',
             'rating' => 'reviews_avg_rating',
             'newest' => 'products.created_at',
-            default  => 'revenue',
+            default => 'revenue',
         }, $sortBy === 'stock' ? 'asc' : 'desc');
 
         return $query;
@@ -405,40 +431,43 @@ class ProductReportController extends Controller
      */
     private function decorateProduct(Product $p, int $rank): Product
     {
-        $prevRev  = (float) $p->prev_revenue;
-        $thisRev  = (float) $p->revenue;
-        $growth   = $prevRev > 0 ? round((($thisRev - $prevRev) / $prevRev) * 100, 1) : ($thisRev > 0 ? 100.0 : 0.0);
+        $prevRev = (float) $p->prev_revenue;
+        $thisRev = (float) $p->revenue;
+        $growth = $prevRev > 0 ? round((($thisRev - $prevRev) / $prevRev) * 100, 1) : ($thisRev > 0 ? 100.0 : 0.0);
         $avgPrice = $p->units_sold > 0 ? round($p->revenue / $p->units_sold) : 0;
 
         $stockStatus = match (true) {
-            $p->stock <= 0  => 'out_of_stock',
+            $p->stock <= 0 => 'out_of_stock',
             $p->stock <= 10 => 'low_stock',
-            !$p->status     => 'inactive',
-            default         => 'active',
+            !$p->status => 'inactive',
+            default => 'active',
         };
 
         $stockPct = $p->stock > 0 ? min(round(($p->stock / 300) * 100), 100) : 0;
 
-        $p->rank         = $rank;
-        $p->growth       = $growth;
-        $p->avg_price    = $avgPrice;
+        $p->rank = $rank;
+        $p->growth = $growth;
+        $p->avg_price = $avgPrice;
         $p->stock_status = $stockStatus;
-        $p->stock_pct    = $stockPct;
+        $p->stock_pct = $stockPct;
 
         return $p;
     }
 
     private function percentChange($old, $new): float
     {
-        if ($old <= 0) return $new > 0 ? 100.0 : 0.0;
+        if ($old <= 0)
+            return $new > 0 ? 100.0 : 0.0;
         return round((($new - $old) / $old) * 100, 1);
     }
 
     private function buildSvgPolyline(array $series, float $maxVal, int $width, int $height): string
     {
         $n = count($series);
-        if ($n === 0) return '';
-        if ($maxVal === 0) $maxVal = 1;
+        if ($n === 0)
+            return '';
+        if ($maxVal === 0)
+            $maxVal = 1;
 
         $points = [];
         foreach ($series as $i => $val) {

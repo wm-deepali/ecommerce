@@ -659,6 +659,16 @@
             font-weight: 600;
             color: var(--text-primary);
         }
+
+        .order-ndr {
+            background: var(--red-bg);
+            color: var(--red);
+        }
+
+        .order-rto {
+            background: #ffe4cc;
+            color: #b45309;
+        }
     </style>
 
     <div class="app-content content container-fluid">
@@ -692,11 +702,20 @@
                     <span class="pay-pill {{ $payClass }}">{{ ucfirst($order->payment_status) }}</span>
                     <span class="order-pill {{ $orderClass }}">{{ ucfirst($order->status) }}</span>
 
+                    @if(!in_array($order->status, ['delivered', 'cancelled', 'ndr', 'rto']))
+                        <button class="btn-secondary-dash no-print"
+                            style="color:var(--red)!important;border-color:var(--red)" data-toggle="modal"
+                            data-target="#markNdrModal">
+                            <i class="fa fa-truck-ramp-box"></i> Mark NDR
+                        </button>
+                    @endif
+
                     @if($order->invoice)
                         <a href="{{ route('admin.orders.invoice', $order) }}" target="_blank" class="btn-secondary-dash">
                             <i class="fa fa-file-pdf-o"></i> Invoice
                         </a>
                     @endif
+
 
                     <a href="{{ route('admin.orders.index') }}" class="btn-secondary-dash">
                         <i class="fa fa-arrow-left"></i> Back
@@ -782,7 +801,7 @@
                                                         @if($sku)
                                                             <div class="product-sku">SKU: {{ $sku }}</div>
                                                         @endif
-                                                        
+
                                                         @if($item->addons->isNotEmpty())
                                                             <div class="product-variant" style="margin-top:4px">
                                                                 @foreach($item->addons as $addon)
@@ -1190,8 +1209,81 @@
                         </div>
                     </div>
 
+
+                    @if($order->ndrs->isNotEmpty())
+                        <div class="section-card">
+                            <div class="section-card-header">
+                                <h5>NDR History</h5>
+                            </div>
+                            <div class="section-card-body" style="padding:14px 20px">
+                                @foreach($order->ndrs as $ndrRecord)
+                                    @php
+                                        $ndrPillMap = ['pending' => 'order-ndr', 'reattempt' => 'order-processing', 'rto' => 'order-rto', 'delivered' => 'order-delivered', 'cancelled' => 'order-cancelled'];
+                                    @endphp
+                                    <div class="info-row">
+                                        <span class="info-label">NDR-{{ str_pad($ndrRecord->id, 4, '0', STR_PAD_LEFT) }}</span>
+                                        <span class="info-value">
+                                            <a href="{{ route('admin.ndr.show', $ndrRecord->id) }}"
+                                                style="color:var(--accent);text-decoration:none">
+                                                <span
+                                                    class="order-pill {{ $ndrPillMap[$ndrRecord->status] ?? 'order-ndr' }}">{{ ucfirst($ndrRecord->status) }}</span>
+                                            </a>
+                                        </span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
+
                 </div>{{-- /right column --}}
             </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade no-print" id="markNdrModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" style="border-radius:12px;border:1px solid #e3e5e8;overflow:hidden">
+            <div class="modal-header" style="border-bottom:1px solid #e3e5e8;padding:18px 20px">
+                <h5 class="modal-title" style="font-size:15px;font-weight:600;margin:0">Mark Delivery Failed (NDR)</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form method="POST" action="{{ route('admin.orders.mark-ndr', $order->id) }}">
+                @csrf
+                <div class="modal-body" style="padding:20px">
+                    <div style="margin-bottom:14px">
+                        <label class="field-label">Reason <span style="color:#b22222">*</span></label>
+                        <select name="reason" class="field-select-full" required>
+                            <option value="">Select reason…</option>
+                            <option value="customer_unavailable">Customer Unavailable</option>
+                            <option value="wrong_address">Wrong / Incomplete Address</option>
+                            <option value="refused_cod">Refused COD Payment</option>
+                            <option value="address_unserviceable">Area Not Serviceable</option>
+                            <option value="requested_reschedule">Customer Requested Reschedule</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom:14px">
+                        <label class="field-label">Next Attempt Date (optional)</label>
+                        <input type="date" name="next_attempt_date" class="field-input-full"
+                            min="{{ now()->format('Y-m-d') }}">
+                    </div>
+                    <div>
+                        <label class="field-label">Remarks</label>
+                        <textarea name="remarks" class="field-textarea"
+                            placeholder="Any additional detail from courier/customer…"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer"
+                    style="border-top:1px solid #e3e5e8;padding:14px 20px;display:flex;justify-content:flex-end;gap:8px">
+                    <button type="button" class="btn-secondary-dash" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn-primary-dash" style="background:var(--red)">
+                        <i class="fa fa-truck-ramp-box"></i> Raise NDR
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

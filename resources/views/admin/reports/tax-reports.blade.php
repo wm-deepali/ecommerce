@@ -1,7 +1,7 @@
 @include('admin.top-header')
 
 <div class="main-section">
-    
+
     @include('admin.header')
 
     <style>
@@ -24,7 +24,7 @@
             --red-bg: #fce8e8;
             --radius-sm: 8px;
             --radius-md: 12px;
-            --shadow-card: 0 1px 3px rgba(0,0,0,.08), 0 0 0 1px var(--border);
+            --shadow-card: 0 1px 3px rgba(0, 0, 0, .08), 0 0 0 1px var(--border);
             --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
@@ -37,7 +37,9 @@
             box-sizing: border-box;
         }
 
-        .tax-page * { box-sizing: border-box; }
+        .tax-page * {
+            box-sizing: border-box;
+        }
 
         /* ── Page header ── */
         .rp-header {
@@ -56,52 +58,112 @@
             margin: 0;
         }
 
-        .crumb { font-size: 12.5px; color: var(--text-hint); margin-top: 3px; }
-        .crumb a { color: var(--accent); text-decoration: none; }
-        .crumb a:hover { text-decoration: underline; }
-        .crumb span { margin: 0 5px; }
+        .crumb {
+            font-size: 12.5px;
+            color: var(--text-hint);
+            margin-top: 3px;
+        }
+
+        .crumb a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .crumb a:hover {
+            text-decoration: underline;
+        }
+
+        .crumb span {
+            margin: 0 5px;
+        }
 
         /* ── Buttons ── */
         .btn-primary-dash {
-            display: inline-flex; align-items: center; gap: 6px;
-            background: var(--accent); color: #fff !important;
-            border: none; border-radius: var(--radius-sm);
-            padding: 8px 16px; font-size: 13px; font-weight: 600;
-            cursor: pointer; text-decoration: none !important;
-            font-family: var(--font); transition: background .15s;
-            box-shadow: 0 1px 3px rgba(48,61,137,.25);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--accent);
+            color: #fff !important;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none !important;
+            font-family: var(--font);
+            transition: background .15s;
+            box-shadow: 0 1px 3px rgba(48, 61, 137, .25);
         }
-        .btn-primary-dash:hover { background: #252f70; }
+
+        .btn-primary-dash:hover {
+            background: #252f70;
+        }
 
         .btn-secondary-dash {
-            display: inline-flex; align-items: center; gap: 6px;
-            background: var(--surface); color: var(--text-primary) !important;
-            border: 1px solid var(--border); border-radius: var(--radius-sm);
-            padding: 8px 16px; font-size: 13px; font-weight: 500;
-            cursor: pointer; text-decoration: none !important;
-            font-family: var(--font); transition: background .15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--surface);
+            color: var(--text-primary) !important;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none !important;
+            font-family: var(--font);
+            transition: background .15s;
         }
-        .btn-secondary-dash:hover { background: var(--bg); }
+
+        .btn-secondary-dash:hover {
+            background: var(--bg);
+        }
 
         .btn-green {
-            display: inline-flex; align-items: center; gap: 6px;
-            background: var(--green-bg); color: var(--green) !important;
-            border: 1px solid #b0ddd0; border-radius: var(--radius-sm);
-            padding: 8px 16px; font-size: 13px; font-weight: 600;
-            cursor: pointer; text-decoration: none !important;
-            font-family: var(--font); transition: all .15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--green-bg);
+            color: var(--green) !important;
+            border: 1px solid #b0ddd0;
+            border-radius: var(--radius-sm);
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none !important;
+            font-family: var(--font);
+            transition: all .15s;
         }
-        .btn-green:hover { background: var(--green); color: #fff !important; }
+
+        .btn-green:hover {
+            background: var(--green);
+            color: #fff !important;
+        }
 
         .btn-amber {
-            display: inline-flex; align-items: center; gap: 6px;
-            background: var(--amber-bg); color: var(--amber) !important;
-            border: 1px solid #f0d060; border-radius: var(--radius-sm);
-            padding: 8px 16px; font-size: 13px; font-weight: 600;
-            cursor: pointer; text-decoration: none !important;
-            font-family: var(--font); transition: all .15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--amber-bg);
+            color: var(--amber) !important;
+            border: 1px solid #f0d060;
+            border-radius: var(--radius-sm);
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none !important;
+            font-family: var(--font);
+            transition: all .15s;
         }
-        .btn-amber:hover { background: var(--amber); color: #fff !important; }
+
+        .btn-amber:hover {
+            background: var(--amber);
+            color: #fff !important;
+        }
 
         /* ── Date range quick pills ── */
         .date-range-bar {
@@ -190,19 +252,28 @@
 
         .filter-control:focus {
             border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(48,61,137,.12);
+            box-shadow: 0 0 0 3px rgba(48, 61, 137, .12);
         }
 
         /* ── Stat grid ── */
         .stat-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(6, 1fr);
             gap: 14px;
             margin-bottom: 20px;
         }
 
-        @media(max-width:1100px) { .stat-grid { grid-template-columns: repeat(3,1fr); } }
-        @media(max-width:640px)  { .stat-grid { grid-template-columns: repeat(2,1fr); } }
+        @media(max-width:1100px) {
+            .stat-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media(max-width:640px) {
+            .stat-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
 
         .stat-card {
             background: var(--surface);
@@ -228,17 +299,39 @@
         }
 
         .stat-icon {
-            width: 34px; height: 34px;
+            width: 34px;
+            height: 34px;
             border-radius: var(--radius-sm);
-            display: flex; align-items: center; justify-content: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 14px;
         }
 
-        .stat-icon.purple { background: var(--accent-light); color: var(--accent); }
-        .stat-icon.green  { background: var(--green-bg);     color: var(--green); }
-        .stat-icon.blue   { background: var(--blue-bg);      color: var(--blue); }
-        .stat-icon.amber  { background: var(--amber-bg);     color: var(--amber); }
-        .stat-icon.red    { background: var(--red-bg);       color: var(--red); }
+        .stat-icon.purple {
+            background: var(--accent-light);
+            color: var(--accent);
+        }
+
+        .stat-icon.green {
+            background: var(--green-bg);
+            color: var(--green);
+        }
+
+        .stat-icon.blue {
+            background: var(--blue-bg);
+            color: var(--blue);
+        }
+
+        .stat-icon.amber {
+            background: var(--amber-bg);
+            color: var(--amber);
+        }
+
+        .stat-icon.red {
+            background: var(--red-bg);
+            color: var(--red);
+        }
 
         .stat-value {
             font-size: 20px;
@@ -273,7 +366,10 @@
             gap: 8px;
         }
 
-        .gst-band-title i { color: var(--accent); font-size: 14px; }
+        .gst-band-title i {
+            color: var(--accent);
+            font-size: 14px;
+        }
 
         .gst-slab-grid {
             display: grid;
@@ -281,8 +377,17 @@
             gap: 10px;
         }
 
-        @media(max-width:960px) { .gst-slab-grid { grid-template-columns: repeat(3,1fr); } }
-        @media(max-width:540px) { .gst-slab-grid { grid-template-columns: repeat(2,1fr); } }
+        @media(max-width:960px) {
+            .gst-slab-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media(max-width:540px) {
+            .gst-slab-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
 
         .gst-slab-card {
             border: 1px solid var(--border);
@@ -347,7 +452,8 @@
         }
 
         .split-dot {
-            width: 10px; height: 10px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             flex-shrink: 0;
         }
@@ -389,7 +495,11 @@
             align-items: flex-end;
         }
 
-        .filter-group { display: flex; flex-direction: column; gap: 5px; }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
 
         .filter-group label {
             font-size: 11px;
@@ -399,10 +509,16 @@
             text-transform: uppercase;
         }
 
-        .filter-actions { display: flex; gap: 8px; align-items: center; }
+        .filter-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
 
         /* ── Table ── */
-        .cat-table-wrap { overflow-x: auto; }
+        .cat-table-wrap {
+            overflow-x: auto;
+        }
 
         .cat-table {
             width: 100%;
@@ -429,8 +545,13 @@
             transition: background .1s;
         }
 
-        .cat-table tbody tr:last-child { border-bottom: none; }
-        .cat-table tbody tr:hover { background: #fafbfc; }
+        .cat-table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        .cat-table tbody tr:hover {
+            background: #fafbfc;
+        }
 
         .cat-table tbody td {
             padding: 11px 14px;
@@ -452,30 +573,61 @@
 
         /* ── Pills ── */
         .pill {
-            display: inline-flex; align-items: center; gap: 4px;
-            font-size: 11.5px; font-weight: 600;
-            padding: 3px 9px; border-radius: 20px; white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11.5px;
+            font-weight: 600;
+            padding: 3px 9px;
+            border-radius: 20px;
+            white-space: nowrap;
         }
 
         .pill::before {
-            content: ''; width: 5px; height: 5px;
-            border-radius: 50%; display: inline-block;
+            content: '';
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            display: inline-block;
         }
 
-        .pill-active   { background: var(--green-bg); color: var(--green); }
-        .pill-active::before { background: var(--green); }
-        .pill-igst     { background: var(--blue-bg);  color: var(--blue); }
-        .pill-igst::before { background: var(--blue); }
-        .pill-cgst     { background: var(--accent-light); color: var(--accent); }
-        .pill-cgst::before { background: var(--accent); }
+        .pill-active {
+            background: var(--green-bg);
+            color: var(--green);
+        }
+
+        .pill-active::before {
+            background: var(--green);
+        }
+
+        .pill-igst {
+            background: var(--blue-bg);
+            color: var(--blue);
+        }
+
+        .pill-igst::before {
+            background: var(--blue);
+        }
+
+        .pill-cgst {
+            background: var(--accent-light);
+            color: var(--accent);
+        }
+
+        .pill-cgst::before {
+            background: var(--accent);
+        }
 
         /* ── ID chip ── */
         .id-chip {
             display: inline-block;
-            background: var(--bg); color: var(--text-secondary);
-            font-size: 11px; font-weight: 700;
-            padding: 2px 7px; border-radius: 6px;
-            font-family: 'SF Mono','Fira Code',monospace;
+            background: var(--bg);
+            color: var(--text-secondary);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 6px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
         }
 
         /* ── Order link ── */
@@ -486,14 +638,25 @@
             font-size: 13px;
         }
 
-        .order-link:hover { text-decoration: underline; }
+        .order-link:hover {
+            text-decoration: underline;
+        }
 
         /* ── Amount cells ── */
-        .amt-green { font-weight: 700; color: var(--green); }
-        .amt-muted { color: var(--text-secondary); }
+        .amt-green {
+            font-weight: 700;
+            color: var(--green);
+        }
+
+        .amt-muted {
+            color: var(--text-secondary);
+        }
 
         /* ── Export dropdown ── */
-        .export-wrap { position: relative; display: inline-block; }
+        .export-wrap {
+            position: relative;
+            display: inline-block;
+        }
 
         .export-menu {
             display: none;
@@ -503,13 +666,15 @@
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius-md);
-            box-shadow: 0 4px 16px rgba(0,0,0,.1);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .1);
             min-width: 180px;
             z-index: 100;
             overflow: hidden;
         }
 
-        .export-menu.open { display: block; }
+        .export-menu.open {
+            display: block;
+        }
 
         .export-menu a {
             display: flex;
@@ -524,8 +689,13 @@
             border-bottom: 1px solid var(--border);
         }
 
-        .export-menu a:last-child { border-bottom: none; }
-        .export-menu a:hover { background: var(--bg); }
+        .export-menu a:last-child {
+            border-bottom: none;
+        }
+
+        .export-menu a:hover {
+            background: var(--bg);
+        }
 
         .export-menu a i {
             width: 16px;
@@ -546,7 +716,10 @@
             gap: 8px;
         }
 
-        .pagination-info { font-size: 12.5px; color: var(--text-hint); }
+        .pagination-info {
+            font-size: 12.5px;
+            color: var(--text-hint);
+        }
 
         /* ── Period badge ── */
         .period-badge {
@@ -554,7 +727,7 @@
             align-items: center;
             gap: 6px;
             background: var(--accent-light);
-            border: 1px solid rgba(48,61,137,.18);
+            border: 1px solid rgba(48, 61, 137, .18);
             border-radius: 20px;
             padding: 5px 14px;
             font-size: 12.5px;
@@ -576,21 +749,43 @@
             margin-bottom: 20px;
         }
 
-        .ca-banner i { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+        .ca-banner i {
+            font-size: 15px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
 
         @media(max-width:768px) {
-            .tax-page { padding: 16px; }
-            .filter-row { flex-direction: column; }
-            .filter-control { min-width: 100%; }
+            .tax-page {
+                padding: 16px;
+            }
+
+            .filter-row {
+                flex-direction: column;
+            }
+
+            .filter-control {
+                min-width: 100%;
+            }
         }
 
         @media print {
-            .rp-header > div:last-child,
+
+            .rp-header>div:last-child,
             .date-range-bar,
             .filter-bar,
-            .cat-pagination { display: none !important; }
-            .tax-page { padding: 0; }
-            .cat-card { box-shadow: none; border: 1px solid #ccc; }
+            .cat-pagination {
+                display: none !important;
+            }
+
+            .tax-page {
+                padding: 0;
+            }
+
+            .cat-card {
+                box-shadow: none;
+                border: 1px solid #ccc;
+            }
         }
     </style>
 
@@ -616,7 +811,8 @@
 
                     <div class="export-wrap" id="exportWrap">
                         <button class="btn-amber" onclick="toggleExport()">
-                            <i class="fa fa-download"></i> Export <i class="fa fa-chevron-down" style="font-size:10px"></i>
+                            <i class="fa fa-download"></i> Export <i class="fa fa-chevron-down"
+                                style="font-size:10px"></i>
                         </button>
                         <div class="export-menu" id="exportMenu">
                             <a href="#" onclick="window.print();return false">
@@ -638,8 +834,10 @@
             <div class="ca-banner">
                 <i class="fa fa-circle-info"></i>
                 <div>
-                    This report contains order-wise GST breakup including taxable value, CGST, SGST, IGST, and invoice-level totals.
-                    Use the date range selector below to generate reports for any filing period (monthly, quarterly, or custom). Export as PDF or CSV to share directly with your Chartered Accountant.
+                    This report contains order-wise GST breakup including taxable value, CGST, SGST, IGST, and
+                    invoice-level totals.
+                    Use the date range selector below to generate reports for any filing period (monthly, quarterly, or
+                    custom). Export as PDF or CSV to share directly with your Chartered Accountant.
                 </div>
             </div>
 
@@ -647,15 +845,20 @@
             <div class="date-range-bar">
                 <form method="GET" id="rangeForm" style="display:contents">
                     <div>
-                        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-hint);margin-bottom:8px">Quick Range</div>
+                        <div
+                            style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-hint);margin-bottom:8px">
+                            Quick Range</div>
                         <div class="range-pills">
                             <button type="button" class="range-pill" onclick="setRange(this, 7)">Last 7 Days</button>
                             <button type="button" class="range-pill" onclick="setRange(this, 15)">Last 15 Days</button>
                             <button type="button" class="range-pill" onclick="setRange(this, 30)">Last 30 Days</button>
                             <button type="button" class="range-pill" onclick="setRange(this, 90)">Last 3 Months</button>
-                            <button type="button" class="range-pill" onclick="setRange(this, 'month')">This Month</button>
-                            <button type="button" class="range-pill" onclick="setRange(this, 'quarter')">This Quarter</button>
-                            <button type="button" class="range-pill" onclick="setRange(this, 'fy')">Financial Year</button>
+                            <button type="button" class="range-pill" onclick="setRange(this, 'month')">This
+                                Month</button>
+                            <button type="button" class="range-pill" onclick="setRange(this, 'quarter')">This
+                                Quarter</button>
+                            <button type="button" class="range-pill" onclick="setRange(this, 'fy')">Financial
+                                Year</button>
                         </div>
                     </div>
 
@@ -664,11 +867,13 @@
                     <div class="custom-range-group">
                         <div>
                             <label>From Date</label>
-                            <input type="date" id="dateFrom" name="date_from" class="filter-control" value="{{ $from->format('Y-m-d') }}">
+                            <input type="date" id="dateFrom" name="date_from" class="filter-control"
+                                value="{{ $from->format('Y-m-d') }}">
                         </div>
                         <div>
                             <label>To Date</label>
-                            <input type="date" id="dateTo" name="date_to" class="filter-control" value="{{ $to->format('Y-m-d') }}">
+                            <input type="date" id="dateTo" name="date_to" class="filter-control"
+                                value="{{ $to->format('Y-m-d') }}">
                         </div>
                         <button type="submit" class="btn-primary-dash">
                             <i class="fa fa-rotate-right"></i> Apply
@@ -725,6 +930,15 @@
                     <div class="stat-sub">Integrated GST (inter-state)</div>
                 </div>
 
+                <div class="stat-card" style="border-color:var(--accent);border-width:1.5px">
+                    <div class="stat-card-top">
+                        <div class="stat-label">Net Tax Payable</div>
+                        <div class="stat-icon purple"><i class="fa fa-scale-balanced"></i></div>
+                    </div>
+                    <div class="stat-value" style="color:var(--accent)">₹{{ number_format($netTaxPayable, 0) }}</div>
+                    <div class="stat-sub">Collected − ₹{{ number_format($creditTotals['tax'], 0) }} reversed</div>
+                </div>
+
             </div>
 
             <!-- ── GST Slab Breakup ── -->
@@ -749,7 +963,8 @@
                     <div class="gst-slab-card" style="background:var(--accent-light);border-color:rgba(48,61,137,.2)">
                         <div class="gst-slab-rate">All</div>
                         <div class="gst-slab-label">Total</div>
-                        <div class="gst-slab-taxable" style="color:var(--accent)">₹{{ number_format($summary->taxable_value ?? 0, 0) }}</div>
+                        <div class="gst-slab-taxable" style="color:var(--accent)">
+                            ₹{{ number_format($summary->taxable_value ?? 0, 0) }}</div>
                         <div class="gst-slab-tax">₹{{ number_format($summary->total_tax ?? 0, 0) }}</div>
                         <div class="gst-slab-sub">Grand total</div>
                     </div>
@@ -788,7 +1003,8 @@
                             <div class="split-label">Total Tax</div>
                             <div style="font-size:11px;color:var(--text-hint)">All components</div>
                         </div>
-                        <div class="split-value" style="color:var(--green)">₹{{ number_format($summary->total_tax ?? 0, 0) }}</div>
+                        <div class="split-value" style="color:var(--green)">
+                            ₹{{ number_format($summary->total_tax ?? 0, 0) }}</div>
                     </div>
                 </div>
             </div>
@@ -806,8 +1022,10 @@
                                 <label>Tax Type</label>
                                 <select name="tax_type" class="filter-control">
                                     <option value="">CGST + SGST + IGST</option>
-                                    <option value="cgst_sgst" {{ request('tax_type') === 'cgst_sgst' ? 'selected' : '' }}>CGST + SGST (Intra-state)</option>
-                                    <option value="igst" {{ request('tax_type') === 'igst' ? 'selected' : '' }}>IGST (Inter-state)</option>
+                                    <option value="cgst_sgst" {{ request('tax_type') === 'cgst_sgst' ? 'selected' : '' }}>
+                                        CGST + SGST (Intra-state)</option>
+                                    <option value="igst" {{ request('tax_type') === 'igst' ? 'selected' : '' }}>IGST
+                                        (Inter-state)</option>
                                 </select>
                             </div>
 
@@ -815,7 +1033,8 @@
                                 <label>Payment Status</label>
                                 <select name="payment_status" class="filter-control">
                                     <option value="">All</option>
-                                    <option value="paid" {{ request('payment_status') === 'paid' ? 'selected' : '' }}>Paid</option>
+                                    <option value="paid" {{ request('payment_status') === 'paid' ? 'selected' : '' }}>Paid
+                                    </option>
                                     <option value="pending" {{ request('payment_status') === 'pending' ? 'selected' : '' }}>Pending</option>
                                     <option value="refunded" {{ request('payment_status') === 'refunded' ? 'selected' : '' }}>Refunded</option>
                                 </select>
@@ -823,7 +1042,9 @@
 
                             <div class="filter-group" style="flex:1">
                                 <label>Search Order / Invoice</label>
-                                <input type="text" name="search" class="filter-control" placeholder="Order ID or Invoice No." style="min-width:200px" value="{{ request('search') }}">
+                                <input type="text" name="search" class="filter-control"
+                                    placeholder="Order ID or Invoice No." style="min-width:200px"
+                                    value="{{ request('search') }}">
                             </div>
 
                             <div class="filter-actions">
@@ -864,12 +1085,17 @@
                                     $slabRate = $isIntra ? $order->cgst_rate + $order->sgst_rate : $order->igst_rate;
                                 @endphp
                                 <tr>
-                                    <td><span class="id-chip">{{ $loop->iteration + ($orders->currentPage() - 1) * $orders->perPage() }}</span></td>
-                                    <td><a href="#" class="order-link">{{ optional($order->invoice)->invoice_number ?? '—' }}</a></td>
+                                    <td><span
+                                            class="id-chip">{{ $loop->iteration + ($orders->currentPage() - 1) * $orders->perPage() }}</span>
+                                    </td>
+                                    <td><a href="#"
+                                            class="order-link">{{ optional($order->invoice)->invoice_number ?? '—' }}</a>
+                                    </td>
                                     <td><a href="#" class="order-link">#{{ $order->order_number }}</a></td>
                                     <td>
                                         {{ optional($order->invoice)->invoice_date?->format('d M Y') ?? $order->created_at->format('d M Y') }}<br>
-                                        <small style="color:var(--text-hint)">{{ $order->created_at->format('h:i A') }}</small>
+                                        <small
+                                            style="color:var(--text-hint)">{{ $order->created_at->format('h:i A') }}</small>
                                     </td>
                                     <td>
                                         <strong style="font-size:13px">{{ $order->customer_name }}</strong><br>
@@ -883,23 +1109,29 @@
                                             <span class="pill pill-igst">IGST</span>
                                         @endif
                                     </td>
-                                    <td><span style="font-weight:700;color:var(--accent)">{{ round($slabRate) }}%</span></td>
+                                    <td><span style="font-weight:700;color:var(--accent)">{{ round($slabRate) }}%</span>
+                                    </td>
                                     <td>₹{{ number_format($order->subtotal, 2) }}</td>
-                                    <td class="{{ $isIntra ? 'amt-green' : 'amt-muted' }}">{{ $isIntra ? '₹'.number_format($order->cgst_amount, 2) : '—' }}</td>
-                                    <td class="{{ $isIntra ? 'amt-green' : 'amt-muted' }}">{{ $isIntra ? '₹'.number_format($order->sgst_amount, 2) : '—' }}</td>
-                                    <td class="{{ !$isIntra ? 'amt-green' : 'amt-muted' }}">{{ !$isIntra ? '₹'.number_format($order->igst_amount, 2) : '—' }}</td>
+                                    <td class="{{ $isIntra ? 'amt-green' : 'amt-muted' }}">
+                                        {{ $isIntra ? '₹' . number_format($order->cgst_amount, 2) : '—' }}</td>
+                                    <td class="{{ $isIntra ? 'amt-green' : 'amt-muted' }}">
+                                        {{ $isIntra ? '₹' . number_format($order->sgst_amount, 2) : '—' }}</td>
+                                    <td class="{{ !$isIntra ? 'amt-green' : 'amt-muted' }}">
+                                        {{ !$isIntra ? '₹' . number_format($order->igst_amount, 2) : '—' }}</td>
                                     <td style="font-weight:700">₹{{ number_format($order->tax_amount, 2) }}</td>
                                     <td style="font-weight:700">₹{{ number_format($order->grand_total, 2) }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="14" style="text-align:center;padding:40px;color:var(--text-hint)">No orders found for this period.</td>
+                                    <td colspan="14" style="text-align:center;padding:40px;color:var(--text-hint)">No orders
+                                        found for this period.</td>
                                 </tr>
                             @endforelse
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="8" style="text-align:right;color:var(--text-hint);font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase">
+                                <td colspan="8"
+                                    style="text-align:right;color:var(--text-hint);font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase">
                                     Page Total
                                 </td>
                                 <td>₹{{ number_format($pageTotals['taxable'], 2) }}</td>
@@ -915,7 +1147,8 @@
 
                 <div class="cat-pagination">
                     <span class="pagination-info">
-                        Showing {{ $orders->firstItem() ?? 0 }}–{{ $orders->lastItem() ?? 0 }} of {{ $totalCount }} invoices &nbsp;·&nbsp; Period: {{ $from->format('d M Y') }} – {{ $to->format('d M Y') }}
+                        Showing {{ $orders->firstItem() ?? 0 }}–{{ $orders->lastItem() ?? 0 }} of {{ $totalCount }}
+                        invoices &nbsp;·&nbsp; Period: {{ $from->format('d M Y') }} – {{ $to->format('d M Y') }}
                     </span>
                     <div>
                         {{ $orders->links() }}
@@ -924,9 +1157,96 @@
 
             </div>
 
+
+            {{-- ── Credit Notes (GST Reversals — Cancelled / RTO / Returned & Refunded) ── --}}
+            <div class="cat-card">
+                <div class="filter-bar" style="display:flex;align-items:center;justify-content:space-between">
+                    <div>
+                        <div style="font-size:13px;font-weight:650;color:var(--text-primary)">Credit Notes — GST
+                            Reversals</div>
+                        <div style="font-size:11.5px;color:var(--text-hint);margin-top:2px">
+                            Cancelled, RTO, or returned orders refunded in this period · {{ $creditTotals['count'] }}
+                            note{{ $creditTotals['count'] == 1 ? '' : 's' }}
+                        </div>
+                    </div>
+                    <a href="{{ route('admin.reports.tax-reports.export-credit-notes-csv', request()->query()) }}"
+                        class="btn-secondary-dash">
+                        <i class="fa fa-file-csv"></i> Export Credit Notes CSV
+                    </a>
+                </div>
+
+                <div class="cat-table-wrap">
+                    <table class="cat-table">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Credit Note No.</th>
+                                <th>Order</th>
+                                <th>Product</th>
+                                <th>Reason</th>
+                                <th>Refund Date</th>
+                                <th>Taxable Reversed</th>
+                                <th>CGST</th>
+                                <th>SGST</th>
+                                <th>IGST</th>
+                                <th>Total Tax Reversed</th>
+                                <th>Refund Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($creditNotes as $row)
+                                <tr>
+                                    <td><span class="pill" style="background:var(--red-bg);color:var(--red)">Credit</span>
+                                    </td>
+                                    <td><span class="id-chip">{{ $row['credit_note_no'] }}</span></td>
+                                    <td><a href="#" class="order-link">#{{ $row['order_number'] }}</a></td>
+                                    <td style="max-width:200px;font-size:12.5px">{{ $row['product'] }}</td>
+                                    <td style="font-size:12.5px;color:var(--text-secondary)">{{ $row['reason'] }}</td>
+                                    <td>{{ $row['refund_date']->format('d M Y') }}</td>
+                                    <td style="color:var(--red)">− ₹{{ number_format($row['taxable'], 2) }}</td>
+                                    <td style="color:var(--red)">− ₹{{ number_format($row['cgst'], 2) }}</td>
+                                    <td style="color:var(--red)">− ₹{{ number_format($row['sgst'], 2) }}</td>
+                                    <td style="color:var(--red)">− ₹{{ number_format($row['igst'], 2) }}</td>
+                                    <td style="font-weight:700;color:var(--red)">− ₹{{ number_format($row['tax'], 2) }}</td>
+                                    <td style="font-weight:700">₹{{ number_format($row['refund_amount'], 2) }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="12" style="text-align:center;padding:32px;color:var(--text-hint)">No credit
+                                        notes for this period.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                        @if($creditTotals['count'] > 0)
+                            <tfoot>
+                                <tr>
+                                    <td colspan="6"
+                                        style="text-align:right;color:var(--text-hint);font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase">
+                                        Total Reversed</td>
+                                    <td style="color:var(--red)">− ₹{{ number_format($creditTotals['taxable'], 2) }}</td>
+                                    <td style="color:var(--red)">− ₹{{ number_format($creditTotals['cgst'], 2) }}</td>
+                                    <td style="color:var(--red)">− ₹{{ number_format($creditTotals['sgst'], 2) }}</td>
+                                    <td style="color:var(--red)">− ₹{{ number_format($creditTotals['igst'], 2) }}</td>
+                                    <td style="color:var(--red)">− ₹{{ number_format($creditTotals['tax'], 2) }}</td>
+                                    <td>₹{{ number_format($creditTotals['refund'], 2) }}</td>
+                                </tr>
+                            </tfoot>
+                        @endif
+                    </table>
+                </div>
+
+                <div class="cat-pagination">
+                    <span class="pagination-info">
+                        Showing {{ $creditNotes->firstItem() ?? 0 }}–{{ $creditNotes->lastItem() ?? 0 }} of
+                        {{ $creditTotals['count'] }} credit notes
+                    </span>
+                    <div>{{ $creditNotes->links() }}</div>
+                </div>
+            </div>
+
         </div><!-- /tax-page -->
     </div>
-    
+
 </div>
 
 @include('admin.footer')
@@ -936,7 +1256,7 @@
         document.getElementById('exportMenu').classList.toggle('open');
     }
 
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (!document.getElementById('exportWrap').contains(e.target)) {
             document.getElementById('exportMenu').classList.remove('open');
         }
@@ -962,6 +1282,6 @@
         }
 
         document.getElementById('dateFrom').value = from.toISOString().slice(0, 10);
-        document.getElementById('dateTo').value   = today.toISOString().slice(0, 10);
+        document.getElementById('dateTo').value = today.toISOString().slice(0, 10);
     }
 </script>

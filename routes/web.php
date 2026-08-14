@@ -60,7 +60,9 @@ use App\Http\Controllers\Admin\{
     CouponReportController,
     TaxReportController,
     SystemLogController,
-    RedirectController
+    RedirectController,
+    NdrController,
+    NdrReportController
 
 };
 
@@ -85,8 +87,8 @@ Route::middleware('maintenance.mode')->group(function () {
         Route::get('/occasions', 'occasions')->name('occasions');
         Route::get('/categories', 'categories')->name('categories');
 
-         Route::get('/search', 'searchResults')->name('search');
-         
+        Route::get('/search', 'searchResults')->name('search');
+
         // Category-based listing (unchanged)
         Route::get('/products/{slug}', 'productListing')->name('products.listing');
 
@@ -393,27 +395,26 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('coupons', CouponController::class);
 
         // Admin Settings routes
-        Route::view('/admin-setting/whatsapp', 'admin.admin-setting.whatsapp')->name('admin-setting.whatsapp');
-        Route::view('/admin-setting/sms-api', 'admin.admin-setting.sms-api')->name('admin-setting.sms-api');
-        Route::view('/admin-setting/google-setting', 'admin.admin-setting.google-setting')->name('admin-setting.google-setting');
-        Route::view('/admin-setting/delivery-setting', 'admin.admin-setting.delivery-setting')->name('admin-setting.delivery-setting');
+        Route::view('/admin-setting/whatsapp', 'admin.admin-settings.whatsapp')->name('admin-setting.whatsapp');
+        Route::view('/admin-setting/sms-api', 'admin.admin-settings.sms-api')->name('admin-setting.sms-api');
+        Route::view('/admin-setting/delivery-setting', 'admin.admin-settings.delivery-setting')->name('admin-setting.delivery-setting');
         Route::view('/security/security-settings', 'admin.security.security-settings')->name('security.security-settings');
 
 
 
- Route::prefix('redirect-settings')->name('redirect-settings.')->group(function () {
-        Route::get('/', [RedirectController::class, 'index'])->name('index');
-        Route::post('/', [RedirectController::class, 'store'])->name('store');
-        Route::put('/{redirect}', [RedirectController::class, 'update'])->name('update');
-        Route::delete('/{redirect}', [RedirectController::class, 'destroy'])->name('destroy');
-        Route::post('/bulk-delete', [RedirectController::class, 'bulkDestroy'])->name('bulk-delete');
-        Route::post('/bulk-toggle', [RedirectController::class, 'bulkToggle'])->name('bulk-toggle');
-        Route::post('/{redirect}/toggle', [RedirectController::class, 'toggleStatus'])->name('toggle');
-        Route::get('/export', [RedirectController::class, 'exportCsv'])->name('export');
-        Route::get('/template', [RedirectController::class, 'downloadTemplate'])->name('template');
-        Route::post('/import', [RedirectController::class, 'importCsv'])->name('import');
-    });
-    
+        Route::prefix('redirect-settings')->name('redirect-settings.')->group(function () {
+            Route::get('/', [RedirectController::class, 'index'])->name('index');
+            Route::post('/', [RedirectController::class, 'store'])->name('store');
+            Route::put('/{redirect}', [RedirectController::class, 'update'])->name('update');
+            Route::delete('/{redirect}', [RedirectController::class, 'destroy'])->name('destroy');
+            Route::post('/bulk-delete', [RedirectController::class, 'bulkDestroy'])->name('bulk-delete');
+            Route::post('/bulk-toggle', [RedirectController::class, 'bulkToggle'])->name('bulk-toggle');
+            Route::post('/{redirect}/toggle', [RedirectController::class, 'toggleStatus'])->name('toggle');
+            Route::get('/export', [RedirectController::class, 'exportCsv'])->name('export');
+            Route::get('/template', [RedirectController::class, 'downloadTemplate'])->name('template');
+            Route::post('/import', [RedirectController::class, 'importCsv'])->name('import');
+        });
+
         Route::get('/admin-setting', [AdminSettingController::class, 'index'])->name('admin-setting.index');
         Route::post('/invoice-settings', [AdminSettingController::class, 'invoiceSettingStore'])->name('invoice-settings.store');
         Route::post('/smtp-settings/store', [AdminSettingController::class, 'smtpSettingStore'])->name('smtp-settings.store');
@@ -423,7 +424,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('/settings/courier/{courier}', [AdminSettingController::class, 'courierDelete'])->name('couriers.delete');
         Route::post('admin-setting/google-setting', [AdminSettingController::class, 'googleSettingStore'])->name('admin-setting.google-setting');
 
-Route::get('/security/system-logs', [SystemLogController::class, 'index'])->name('security.system-logs');
+        Route::get('/security/system-logs', [SystemLogController::class, 'index'])->name('security.system-logs');
 
         Route::get('/settings/email-templates', [EmailTemplateController::class, 'index'])->name('settings.email-templates.index');
         Route::post('settings/email-templates/test', [EmailTemplateController::class, 'sendTest'])->name('settings.email-templates.test');
@@ -431,7 +432,7 @@ Route::get('/security/system-logs', [SystemLogController::class, 'index'])->name
 
         // Orders routes
         Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
-         Route::get('orders/print-labels', [OrderController::class, 'printLabels'])->name('orders.print-labels');
+        Route::get('orders/print-labels', [OrderController::class, 'printLabels'])->name('orders.print-labels');
         Route::post('orders/print-labels/preview', [OrderController::class, 'previewLabels'])->name('orders.preview-labels');
         Route::post('orders/print-labels/generate', [OrderController::class, 'generateLabels'])->name('orders.generate-labels');
         Route::get('orders/export', [OrderController::class, 'export'])->name('orders.export');
@@ -450,14 +451,14 @@ Route::get('/security/system-logs', [SystemLogController::class, 'index'])->name
         Route::get('customers/addresses/export', [CustomerAddressController::class, 'export'])->name('customers.addresses.export');
 
         // Customers routes
-   Route::get('customers/customer-wishlist', [CustomerWishlistController::class, 'index'])->name('customers.customer-wishlist');
-       Route::get('customers/{customer}/wishlist-detail', [CustomerWishlistController::class, 'show'])
-    ->name('customers.customer-wishlist-detail');
-    Route::delete('customers/{customer}/wishlist/clear', [CustomerWishlistController::class, 'clearWishlist'])
-    ->name('customers.wishlist.clear');
-    Route::delete('/wishlist/{wishlistId}', [\App\Http\Controllers\Admin\CustomerWishlistController::class, 'removeItem']);
-    
-    
+        Route::get('customers/customer-wishlist', [CustomerWishlistController::class, 'index'])->name('customers.customer-wishlist');
+        Route::get('customers/{customer}/wishlist-detail', [CustomerWishlistController::class, 'show'])
+            ->name('customers.customer-wishlist-detail');
+        Route::delete('customers/{customer}/wishlist/clear', [CustomerWishlistController::class, 'clearWishlist'])
+            ->name('customers.wishlist.clear');
+        Route::delete('/wishlist/{wishlistId}', [\App\Http\Controllers\Admin\CustomerWishlistController::class, 'removeItem']);
+
+
         Route::get('customers', [CustomerController::class, 'index'])->name('customers.index');
         Route::get('customers/{customer}', [CustomerController::class, 'show'])->name('customers.show');
         Route::delete('customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy');
@@ -478,9 +479,23 @@ Route::get('/security/system-logs', [SystemLogController::class, 'index'])->name
         Route::patch('order-returns/{orderReturn}/approve', [OrderReturnController::class, 'approve'])->name('order-returns.approve');
         Route::patch('order-returns/{orderReturn}/reject', [OrderReturnController::class, 'reject'])->name('order-returns.reject');
         Route::post('order-returns/{orderReturn}/refund', [OrderReturnController::class, 'refund'])->name('order-returns.refund');
+        Route::patch('order-returns/{orderReturn}/mark-refund-failed', [OrderReturnController::class, 'markRefundFailed'])->name('order-returns.mark-refund-failed');
 
         Route::get('refunds', [RefundController::class, 'index'])->name('refunds.index');
         Route::get('refunds/export', [RefundController::class, 'export'])->name('refunds.export');
+
+
+        Route::prefix('ndr')->name('ndr.')->group(function () {
+            Route::get('/', [NdrController::class, 'index'])->name('index');
+            Route::get('/export', [NdrController::class, 'export'])->name('export');
+            Route::get('/{ndr}', [NdrController::class, 'show'])->name('show');
+            Route::patch('/{ndr}/reattempt', [NdrController::class, 'reattempt'])->name('reattempt');
+            Route::patch('/{ndr}/mark-delivered', [NdrController::class, 'markDelivered'])->name('mark-delivered');
+            Route::patch('/{ndr}/mark-rto', [NdrController::class, 'markRto'])->name('mark-rto');
+            Route::patch('/{ndr}/cancel', [NdrController::class, 'cancel'])->name('cancel');
+        });
+
+        Route::post('orders/{order}/mark-ndr', [NdrController::class, 'markNdr'])->name('orders.mark-ndr');
 
 
         Route::get('stock', [StockManagementController::class, 'index'])->name('stock.index');
@@ -506,7 +521,6 @@ Route::get('/security/system-logs', [SystemLogController::class, 'index'])->name
 
 
         // Listing page
-
         Route::get('/reviews', [App\Http\Controllers\Admin\ProductReviewController::class, 'index'])->name('reviews.index');
         Route::get('/reviews/{review}', [App\Http\Controllers\Admin\ProductReviewController::class, 'show'])->name('reviews.show');
         Route::patch('/reviews/{review}/approve', [App\Http\Controllers\Admin\ProductReviewController::class, 'approve'])->name('reviews.approve');
@@ -525,27 +539,31 @@ Route::get('/security/system-logs', [SystemLogController::class, 'index'])->name
         Route::get('reports/customers', [CustomerReportController::class, 'index'])->name('reports.customers');
         Route::get('reports/customers/export/excel', [CustomerReportController::class, 'exportExcel'])->name('reports.customers.export.excel');
         Route::get('reports/customers/export/pdf', [CustomerReportController::class, 'exportPdf'])->name('reports.customers.export.pdf');
-        
+
         Route::get('/reports/order-reports', [OrderReportController::class, 'index'])->name('reports.order-reports');
         Route::get('/reports/order-reports/export-excel', [OrderReportController::class, 'exportExcel'])->name('reports.order-reports.export-excel');
-Route::get('/reports/order-reports/export-pdf', [OrderReportController::class, 'exportPdf'])->name('reports.order-reports.export-pdf');
-        
-      
-Route::get('/reports/coupon-reports', [CouponReportController::class, 'index'])->name('reports.coupon-reports');
-Route::get('/reports/coupon-reports/export', [CouponReportController::class, 'export'])->name('reports.coupon-reports.export');
+        Route::get('/reports/order-reports/export-pdf', [OrderReportController::class, 'exportPdf'])->name('reports.order-reports.export-pdf');
 
-       // routes/web.php (inside your admin group)
-Route::get('/reports/tax-reports', [TaxReportController::class, 'index'])->name('reports.tax-reports');
-Route::get('/reports/tax-reports/export-csv', [TaxReportController::class, 'exportCsv'])->name('reports.tax-reports.export-csv');
-        
-     
+
+        Route::get('/reports/coupon-reports', [CouponReportController::class, 'index'])->name('reports.coupon-reports');
+        Route::get('/reports/coupon-reports/export', [CouponReportController::class, 'export'])->name('reports.coupon-reports.export');
+
+        // routes/web.php (inside your admin group)
+        Route::get('/reports/tax-reports', [TaxReportController::class, 'index'])->name('reports.tax-reports');
+        Route::get('/reports/tax-reports/export-csv', [TaxReportController::class, 'exportCsv'])->name('reports.tax-reports.export-csv');
+        Route::get('reports/tax-reports/export-credit-notes-csv', [TaxReportController::class, 'exportCreditNotesCsv'])->name('reports.tax-reports.export-credit-notes-csv');
+
+        Route::get('reports/ndr', [NdrReportController::class, 'index'])->name('reports.ndr');
+        Route::get('reports/ndr/export', [NdrReportController::class, 'export'])->name('reports.ndr.export');
+
+
         Route::prefix('notifications')->name('notifications.')->group(function () {
-    Route::get('/', [NotificationController::class, 'index'])->name('index');
-    Route::post('/read-all', [NotificationController::class, 'markAllRead'])->name('read-all');
-    Route::delete('/clear-read', [NotificationController::class, 'clearRead'])->name('clear-read');
-    Route::post('/{notification}/read', [NotificationController::class, 'markRead'])->name('read');
-    Route::delete('/{notification}', [NotificationController::class, 'destroy'])->name('destroy');
-});
+            Route::get('/', [NotificationController::class, 'index'])->name('index');
+            Route::post('/read-all', [NotificationController::class, 'markAllRead'])->name('read-all');
+            Route::delete('/clear-read', [NotificationController::class, 'clearRead'])->name('clear-read');
+            Route::post('/{notification}/read', [NotificationController::class, 'markRead'])->name('read');
+            Route::delete('/{notification}', [NotificationController::class, 'destroy'])->name('destroy');
+        });
 
         Route::view('/templates-setting', 'admin.admin-settings.template-setting')->name('templates.template-setting');
 

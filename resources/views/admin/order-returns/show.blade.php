@@ -29,6 +29,8 @@
     .btn-primary-dash:hover { background: #252f70; }
     .btn-secondary-dash { display: inline-flex; align-items: center; gap: 6px; background: var(--surface); color: var(--text-primary) !important; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 16px; font-size: 13px; font-weight: 500; cursor: pointer; text-decoration: none !important; font-family: var(--font); transition: background .15s; }
     .btn-secondary-dash:hover { background: var(--bg); }
+    .btn-danger-dash { display: inline-flex; align-items: center; gap: 6px; background: var(--red-bg); color: var(--red) !important; border: 1px solid #f0c0c0; border-radius: var(--radius-sm); padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none !important; font-family: var(--font); transition: all .15s; }
+    .btn-danger-dash:hover { background: var(--red); color: #fff !important; }
 
     .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
     @media(max-width:760px) { .detail-grid { grid-template-columns: 1fr; } }
@@ -46,10 +48,10 @@
     .pill-approved { background: var(--blue-bg); color: var(--blue); }
     .pill-rejected { background: var(--red-bg); color: var(--red); }
     .pill-refunded { background: var(--green-bg); color: var(--green); }
+    .pill-failed { background: var(--red-bg); color: var(--red); }
 
     .cust-avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--accent-light); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: var(--accent); flex-shrink: 0; }
 
-    /* Timeline */
     .timeline { list-style: none; padding: 0; margin: 0; }
     .tl-item { display: flex; gap: 12px; padding-bottom: 18px; position: relative; }
     .tl-item:last-child { padding-bottom: 0; }
@@ -62,11 +64,11 @@
     .tl-label { font-size: 13px; font-weight: 500; color: var(--text-primary); }
     .tl-time { font-size: 11.5px; color: var(--text-hint); margin-top: 2px; }
 
-    /* Success banner */
     .success-banner { display: flex; align-items: center; gap: 10px; background: var(--green-bg); border: 1px solid #b2dfd2; border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 16px; font-size: 13px; font-weight: 500; color: var(--green); }
 
-    /* Proof image */
     .proof-preview { max-width: 100%; max-height: 220px; border-radius: 8px; border: 1px solid var(--border); margin-top: 10px; display: block; }
+
+    .addon-row { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--text-secondary); padding: 4px 0; }
     </style>
 
     <div class="app-content content container-fluid">
@@ -75,6 +77,12 @@
             @if(session('refund_success'))
             <div class="success-banner">
                 <i class="fa fa-check-circle"></i> Refund submitted successfully — UTR: <strong>{{ session('refund_utr') }}</strong>
+            </div>
+            @endif
+
+            @if(session('success'))
+            <div class="success-banner">
+                <i class="fa fa-check-circle"></i> {{ session('success') }}
             </div>
             @endif
 
@@ -107,7 +115,7 @@
 
                     @if($return->status === 'approved')
                         <button class="btn-primary-dash"
-                                onclick="openRefundModal({{ $return->id }}, '{{ addslashes($return->customer->name) }}', '{{ addslashes($return->orderItem->product->name ?? '') }}', {{ $return->orderItem->price ?? 0 }}, {{ \Illuminate\Support\Js::from([
+                                onclick="openRefundModal({{ $return->id }}, '{{ addslashes($return->customer->name) }}', '{{ addslashes($return->orderItem->product->name ?? '') }}', {{ $return->refundable_amount }}, {{ \Illuminate\Support\Js::from([
                                     'method' => $return->refund_method,
                                     'upi_id' => $return->upi_id,
                                     'bank_name' => $return->bank_name,
@@ -120,6 +128,16 @@
                                 ]) }})">
                             <i class="fa fa-credit-card"></i> Process Refund
                         </button>
+                    @endif
+
+                    @if($return->status === 'completed' && $return->refundTransaction && $return->refundTransaction->status === 'completed')
+                        <form method="POST" action="{{ route('admin.order-returns.mark-refund-failed', $return->id) }}"
+                              onsubmit="return confirm('Mark this refund as failed? The return will reopen for retry.')">
+                            @csrf @method('PATCH')
+                            <button type="submit" class="btn-danger-dash">
+                                <i class="fa fa-triangle-exclamation"></i> Mark Refund Failed
+                            </button>
+                        </form>
                     @endif
 
                     <a href="{{ route('admin.order-returns.index') }}" class="btn-secondary-dash">
@@ -137,7 +155,22 @@
                     <div class="drow"><span class="dlabel">Product</span><span class="dval">{{ $return->orderItem->product->name ?? '—' }}</span></div>
                     <div class="drow"><span class="dlabel">Reason</span><span class="dval">{{ $return->returnReason->title ?? $return->details ?? '—' }}</span></div>
                     <div class="drow"><span class="dlabel">Type</span><span class="dval">{{ ucfirst($return->type) }}</span></div>
-                    <div class="drow"><span class="dlabel">Amount</span><span class="dval" style="color:var(--accent);font-size:15px">₹{{ number_format($return->orderItem->price ?? 0, 0) }}</span></div>
+
+                    @if($return->orderItem->addons->isNotEmpty())
+                    <div class="drow" style="align-items:flex-start">
+                        <span class="dlabel">Addons</span>
+                        <div style="text-align:right">
+                            @foreach($return->orderItem->addons as $addon)
+                                <div class="addon-row" style="justify-content:flex-end;gap:8px">
+                                    <span>{{ $addon->detail }}</span>
+                                    <span>₹{{ number_format($addon->price, 2) }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+
+                    <div class="drow"><span class="dlabel">Refundable Amount</span><span class="dval" style="color:var(--accent);font-size:15px">₹{{ number_format($return->refundable_amount, 2) }}</span></div>
                     <div class="drow"><span class="dlabel">Requested On</span><span class="dval">{{ $return->created_at->format('d M Y, h:i A') }}</span></div>
                     @if($return->details)
                     <div class="drow"><span class="dlabel">Details</span><span class="dval" style="max-width:240px;text-align:right">{{ $return->details }}</span></div>
@@ -214,12 +247,22 @@
 
                 {{--
                     Refund Information (Processed) — the ADMIN's actual transaction
-                    details, now read from refund_transactions instead of order_returns,
-                    so they no longer collide with the card above.
+                    details, read from refund_transactions. Shows the transaction's
+                    own status (completed/failed) rather than assuming success.
                 --}}
                 @if($return->status === 'completed' && $return->refundTransaction)
                 <div class="dcard">
                     <h3>Refund Information (Processed)</h3>
+                    <div class="drow">
+                        <span class="dlabel">Status</span>
+                        <span class="dval">
+                            @if($return->refundTransaction->status === 'failed')
+                                <span class="pill pill-failed">Failed</span>
+                            @else
+                                <span class="pill pill-refunded">Completed</span>
+                            @endif
+                        </span>
+                    </div>
                     <div class="drow"><span class="dlabel">Method</span><span class="dval">{{ strtoupper($return->refundTransaction->refund_method) }}</span></div>
                     @if($return->refundTransaction->utr_id)
                     <div class="drow"><span class="dlabel">UTR / Reference</span><span class="dval" style="font-family:monospace">{{ $return->refundTransaction->utr_id }}</span></div>
@@ -274,9 +317,15 @@
                         @endif
                         @if($return->status === 'completed' && $return->refundTransaction)
                         <li class="tl-item">
-                            <div class="tl-dot tl-dot-green"></div>
+                            <div class="tl-dot {{ $return->refundTransaction->status === 'failed' ? 'tl-dot-red' : 'tl-dot-green' }}"></div>
                             <div>
-                                <div class="tl-label">Refund processed via {{ strtoupper($return->refundTransaction->refund_method) }}</div>
+                                <div class="tl-label">
+                                    @if($return->refundTransaction->status === 'failed')
+                                        Refund failed via {{ strtoupper($return->refundTransaction->refund_method) }}
+                                    @else
+                                        Refund processed via {{ strtoupper($return->refundTransaction->refund_method) }}
+                                    @endif
+                                </div>
                                 <div class="tl-time">UTR: {{ $return->refundTransaction->utr_id }}</div>
                                 <div class="tl-time">{{ $return->refundTransaction->created_at->format('d M Y, h:i A') }}</div>
                             </div>

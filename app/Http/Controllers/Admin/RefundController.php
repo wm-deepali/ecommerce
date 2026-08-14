@@ -31,6 +31,10 @@ class RefundController extends Controller
             });
         }
 
+        // Status filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
 
         // Date Filters
         if ($request->filled('from_date')) {
@@ -46,7 +50,7 @@ class RefundController extends Controller
         $stats = [
             'total' => RefundTransaction::count(),
 
-            'total_amount' => RefundTransaction::sum('amount'),
+            'total_amount' => RefundTransaction::where('status', 'completed')->sum('amount'),
 
             'this_month' => RefundTransaction::whereMonth(
                 'created_at',
@@ -56,7 +60,7 @@ class RefundController extends Controller
                 now()->year
             )->count(),
 
-            'failed' => 0,
+            'failed' => RefundTransaction::where('status', 'failed')->count(),
         ];
 
         $methodLabels = [
@@ -112,7 +116,7 @@ class RefundController extends Controller
                     $refund->amount,
                     $refund->refund_method,
                     $refund->utr_id,
-                    'refunded',
+                    ucfirst($refund->status),
                     $refund->created_at->format('d M Y'),
                 ]);
             }

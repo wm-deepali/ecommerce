@@ -30,12 +30,17 @@ class OrderController extends Controller
     ];
 
     // ── Tab counts ────────────────────────────────────────
+    // NDR and RTO added as their own tabs — without these, orders that fail
+    // delivery (status = 'ndr'/'rto') would only ever show up under "All"
+    // and never surface in a dedicated queue for admins to work through.
     $tabCounts = [
         'all' => Order::when($customerId, fn ($q) => $q->where('customer_id', $customerId))->count(),
         'new' => Order::where('status', 'new')->when($customerId, fn ($q) => $q->where('customer_id', $customerId))->count(),
         'processing' => Order::where('status', 'processing')->when($customerId, fn ($q) => $q->where('customer_id', $customerId))->count(),
         'shipped' => Order::where('status', 'shipped')->when($customerId, fn ($q) => $q->where('customer_id', $customerId))->count(),
         'delivered' => Order::where('status', 'delivered')->when($customerId, fn ($q) => $q->where('customer_id', $customerId))->count(),
+        'ndr' => Order::where('status', 'ndr')->when($customerId, fn ($q) => $q->where('customer_id', $customerId))->count(),
+        'rto' => Order::where('status', 'rto')->when($customerId, fn ($q) => $q->where('customer_id', $customerId))->count(),
         'cancelled' => Order::where('status', 'cancelled')->when($customerId, fn ($q) => $q->where('customer_id', $customerId))->count(),
     ];
 
@@ -175,7 +180,7 @@ class OrderController extends Controller
             'city',
             'invoice',
             'statusHistory',
-
+            'ndrs',                   // NDR history for the "NDR History" card + Mark NDR button gating
         ]);
 
 
@@ -207,6 +212,8 @@ class OrderController extends Controller
             'shipped' => 'order-shipped',
             'delivered' => 'order-delivered',
             'cancelled' => 'order-cancelled',
+            'ndr' => 'order-ndr',
+            'rto' => 'order-rto',
             default => 'order-new',
         };
 
@@ -220,6 +227,8 @@ class OrderController extends Controller
             'shipped' => ['title' => 'Shipped', 'desc' => 'Package dispatched.'],
             'delivered' => ['title' => 'Delivered', 'desc' => 'Order delivered to customer.'],
             'cancelled' => ['title' => 'Cancelled', 'desc' => 'Order was cancelled.'],
+            'ndr' => ['title' => 'Delivery Failed (NDR)', 'desc' => 'Courier could not deliver the order.'],
+            'rto' => ['title' => 'Returned to Origin', 'desc' => 'Order returned; stock credited back.'],
         ];
 
         $couriers = Courier::where('is_active', 1)
@@ -241,7 +250,14 @@ class OrderController extends Controller
     }
 
     // ── Status update AJAX/POST method ────────────────────────────────────────────
-
+    // NOTE: this intentionally still only accepts pending/processing/shipped/
+    // delivered/cancelled. 'ndr' and 'rto' are NOT settable here — they're only
+    // set via NdrController (markNdr / reattempt / markRto / cancel), which also
+    // handles the NDR-specific side effects (customer notification wording,
+    // stock reversal on RTO, etc.) that this generic status flow doesn't do.
+    // The "Update Status" panel is hidden in the blade when status is ndr/rto
+    // for the same reason — don't let this form silently overwrite an active
+    // NDR case.
     public function updateStatus(Request $request, Order $order)
     {
         $request->validate([
@@ -279,7 +295,7 @@ class OrderController extends Controller
             $order->statusHistory()->create([
                 'status' => $request->status,
                 'remarks' => $remarks,
-                'previous_status'=> $order->status,
+                'previous_status'=> $oldStatus,
                 'triggered_by' => 'Admin (' . auth()->user()->name . ')'
             ]);
 

@@ -25,7 +25,8 @@ class SalesReportExport implements WithMultipleSheets
     public function __construct(
         public readonly Carbon $start,
         public readonly Carbon $end
-    ) {}
+    ) {
+    }
 
     public function sheets(): array
     {
@@ -45,9 +46,13 @@ class SalesKpiSheet implements FromCollection, WithHeadings, WithTitle, WithStyl
     public function __construct(
         private Carbon $start,
         private Carbon $end
-    ) {}
+    ) {
+    }
 
-    public function title(): string { return 'Summary'; }
+    public function title(): string
+    {
+        return 'Summary';
+    }
 
     public function headings(): array
     {
@@ -56,43 +61,44 @@ class SalesKpiSheet implements FromCollection, WithHeadings, WithTitle, WithStyl
 
     public function collection()
     {
-        $days      = $this->start->diffInDays($this->end) + 1;
-        $prevEnd   = $this->start->copy()->subSecond();
+        $days = $this->start->diffInDays($this->end) + 1;
+        $prevEnd = $this->start->copy()->subSecond();
         $prevStart = $prevEnd->copy()->subDays($days - 1)->startOfDay();
 
-        $revenueThis = (float) Order::where('payment_status', 'paid')->whereBetween('created_at', [$this->start, $this->end])->sum('grand_total');
-        $revenuePrev = (float) Order::where('payment_status', 'paid')->whereBetween('created_at', [$prevStart, $prevEnd])->sum('grand_total');
+        $revenueThis = (float) Order::where('payment_status', 'paid')->whereNotIn('status', ['cancelled', 'rto'])->whereBetween('created_at', [$this->start, $this->end])->sum('grand_total');
+        $revenuePrev = (float) Order::where('payment_status', 'paid')->whereNotIn('status', ['cancelled', 'rto'])->whereBetween('created_at', [$prevStart, $prevEnd])->sum('grand_total');
 
         $ordersThis = Order::whereBetween('created_at', [$this->start, $this->end])->count();
         $ordersPrev = Order::whereBetween('created_at', [$prevStart, $prevEnd])->count();
 
-        $unitsThis = (int) OrderItem::join('orders', 'orders.id', '=', 'order_items.order_id')->where('orders.payment_status', 'paid')->whereBetween('orders.created_at', [$this->start, $this->end])->sum('order_items.quantity');
-        $unitsPrev = (int) OrderItem::join('orders', 'orders.id', '=', 'order_items.order_id')->where('orders.payment_status', 'paid')->whereBetween('orders.created_at', [$prevStart, $prevEnd])->sum('order_items.quantity');
+        $unitsThis = (int) OrderItem::join('orders', 'orders.id', '=', 'order_items.order_id')->where('orders.payment_status', 'paid')->whereNotIn('orders.status', ['cancelled', 'rto'])->whereBetween('orders.created_at', [$this->start, $this->end])->sum('order_items.quantity');
+        $unitsPrev = (int) OrderItem::join('orders', 'orders.id', '=', 'order_items.order_id')->where('orders.payment_status', 'paid')->whereNotIn('orders.status', ['cancelled', 'rto'])->whereBetween('orders.created_at', [$prevStart, $prevEnd])->sum('order_items.quantity');
 
-        $returnsThis    = OrderReturn::whereBetween('created_at', [$this->start, $this->end])->count();
+        $returnsThis = OrderReturn::whereBetween('created_at', [$this->start, $this->end])->count();
         $returnRateThis = $ordersThis > 0 ? round(($returnsThis / $ordersThis) * 100, 1) : 0;
 
-        $grossRevenue   = (float) Order::where('payment_status', 'paid')->whereBetween('created_at', [$this->start, $this->end])->sum('subtotal');
-        $discounts      = (float) Order::where('payment_status', 'paid')->whereBetween('created_at', [$this->start, $this->end])->sum('discount');
-        $refunds        = (float) RefundTransaction::whereBetween('created_at', [$this->start, $this->end])->sum('amount');
-        $tax            = (float) Order::where('payment_status', 'paid')->whereBetween('created_at', [$this->start, $this->end])->sum('tax_amount');
+        $grossRevenue = (float) Order::where('payment_status', 'paid')->whereNotIn('status', ['cancelled', 'rto'])->whereBetween('created_at', [$this->start, $this->end])->sum('subtotal');
+        $discounts = (float) Order::where('payment_status', 'paid')->whereNotIn('status', ['cancelled', 'rto'])->whereBetween('created_at', [$this->start, $this->end])->sum('discount');
+        $refunds = (float) RefundTransaction::whereBetween('created_at', [$this->start, $this->end])->sum('amount');
+        $tax = (float) Order::where('payment_status', 'paid')->whereNotIn('status', ['cancelled', 'rto'])->whereBetween('created_at', [$this->start, $this->end])->sum('tax_amount');
+
 
         $pct = fn($old, $new) => $old > 0 ? round((($new - $old) / $old) * 100, 1) . '%' : ($new > 0 ? '+100%' : '0%');
 
         return collect([
             ['Period', $this->start->format('d M Y') . ' – ' . $this->end->format('d M Y'), $prevStart->format('d M Y') . ' – ' . $prevEnd->format('d M Y'), ''],
             ['', '', '', ''],
-            ['Total Revenue (₹)',      number_format($revenueThis, 2), number_format($revenuePrev, 2), $pct($revenuePrev, $revenueThis)],
-            ['Total Orders',           number_format($ordersThis),     number_format($ordersPrev),     $pct($ordersPrev, $ordersThis)],
-            ['Avg. Order Value (₹)',   $ordersThis > 0 ? number_format($revenueThis / $ordersThis, 2) : 0, $ordersPrev > 0 ? number_format($revenuePrev / $ordersPrev, 2) : 0, ''],
-            ['Units Sold',             number_format($unitsThis),      number_format($unitsPrev),      $pct($unitsPrev, $unitsThis)],
-            ['Return Rate',            $returnRateThis . '%',          '',                             ''],
+            ['Total Revenue (₹)', number_format($revenueThis, 2), number_format($revenuePrev, 2), $pct($revenuePrev, $revenueThis)],
+            ['Total Orders', number_format($ordersThis), number_format($ordersPrev), $pct($ordersPrev, $ordersThis)],
+            ['Avg. Order Value (₹)', $ordersThis > 0 ? number_format($revenueThis / $ordersThis, 2) : 0, $ordersPrev > 0 ? number_format($revenuePrev / $ordersPrev, 2) : 0, ''],
+            ['Units Sold', number_format($unitsThis), number_format($unitsPrev), $pct($unitsPrev, $unitsThis)],
+            ['Return Rate', $returnRateThis . '%', '', ''],
             ['', '', '', ''],
-            ['Gross Revenue (₹)',      number_format($grossRevenue, 2), '', ''],
-            ['Discounts Given (₹)',    number_format($discounts, 2),   '', ''],
-            ['Refunds / Returns (₹)',  number_format($refunds, 2),     '', ''],
-            ['Tax Collected GST (₹)',  number_format($tax, 2),         '', ''],
-            ['Net Revenue (₹)',        number_format($revenueThis, 2), '', ''],
+            ['Gross Revenue (₹)', number_format($grossRevenue, 2), '', ''],
+            ['Discounts Given (₹)', number_format($discounts, 2), '', ''],
+            ['Refunds / Returns (₹)', number_format($refunds, 2), '', ''],
+            ['Tax Collected GST (₹)', number_format($tax, 2), '', ''],
+            ['Net Revenue (₹)', number_format($revenueThis, 2), '', ''],
         ]);
     }
 
@@ -113,9 +119,14 @@ class SalesKpiSheet implements FromCollection, WithHeadings, WithTitle, WithStyl
 
 class TopProductsSheet implements FromCollection, WithHeadings, WithTitle, WithStyles, WithColumnWidths
 {
-    public function __construct(private Carbon $start, private Carbon $end) {}
+    public function __construct(private Carbon $start, private Carbon $end)
+    {
+    }
 
-    public function title(): string { return 'Top Products'; }
+    public function title(): string
+    {
+        return 'Top Products';
+    }
 
     public function headings(): array
     {
@@ -126,6 +137,7 @@ class TopProductsSheet implements FromCollection, WithHeadings, WithTitle, WithS
     {
         $totalRevenue = (float) OrderItem::join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('orders.payment_status', 'paid')
+            ->whereNotIn('orders.status', ['cancelled', 'rto'])
             ->whereBetween('orders.created_at', [$this->start, $this->end])
             ->sum('order_items.total');
 
@@ -133,9 +145,11 @@ class TopProductsSheet implements FromCollection, WithHeadings, WithTitle, WithS
             ->join('products', 'products.id', '=', 'order_items.product_id')
             ->leftJoin('categories', 'categories.id', '=', 'products.category_id')
             ->where('orders.payment_status', 'paid')
+            ->whereNotIn('orders.status', ['cancelled', 'rto'])
             ->whereBetween('orders.created_at', [$this->start, $this->end])
             ->select(
-                'order_items.product_name', 'products.sku',
+                'order_items.product_name',
+                'products.sku',
                 'categories.name as category_name',
                 DB::raw('SUM(order_items.quantity) as units'),
                 DB::raw('SUM(order_items.total) as revenue')
@@ -173,9 +187,14 @@ class TopProductsSheet implements FromCollection, WithHeadings, WithTitle, WithS
 
 class DailyBreakdownSheet implements FromCollection, WithHeadings, WithTitle, WithStyles, WithColumnWidths
 {
-    public function __construct(private Carbon $start, private Carbon $end) {}
+    public function __construct(private Carbon $start, private Carbon $end)
+    {
+    }
 
-    public function title(): string { return 'Daily Breakdown'; }
+    public function title(): string
+    {
+        return 'Daily Breakdown';
+    }
 
     public function headings(): array
     {
@@ -185,7 +204,11 @@ class DailyBreakdownSheet implements FromCollection, WithHeadings, WithTitle, Wi
     public function collection()
     {
         $orders = Order::whereBetween('created_at', [$this->start, $this->end])
-            ->select(DB::raw('DATE(created_at) as d'), DB::raw('COUNT(*) as cnt'), DB::raw("SUM(CASE WHEN payment_status = 'paid' THEN grand_total ELSE 0 END) as rev"))
+            ->select(
+                DB::raw('DATE(created_at) as d'),
+                DB::raw('COUNT(*) as cnt'),
+                DB::raw("SUM(CASE WHEN payment_status = 'paid' AND status NOT IN ('cancelled', 'rto') THEN grand_total ELSE 0 END) as rev")
+            )
             ->groupBy('d')->get()->keyBy('d');
 
         $returns = OrderReturn::whereBetween('created_at', [$this->start, $this->end])
@@ -194,7 +217,7 @@ class DailyBreakdownSheet implements FromCollection, WithHeadings, WithTitle, Wi
 
         $rows = [];
         for ($d = $this->start->copy(); $d->lte($this->end); $d->addDay()) {
-            $key    = $d->format('Y-m-d');
+            $key = $d->format('Y-m-d');
             $rows[] = [
                 $d->format('d M Y'),
                 $d->format('l'),
@@ -224,9 +247,14 @@ class DailyBreakdownSheet implements FromCollection, WithHeadings, WithTitle, Wi
 
 class PaymentMethodsSheet implements FromCollection, WithHeadings, WithTitle, WithStyles, WithColumnWidths
 {
-    public function __construct(private Carbon $start, private Carbon $end) {}
+    public function __construct(private Carbon $start, private Carbon $end)
+    {
+    }
 
-    public function title(): string { return 'Payment Methods'; }
+    public function title(): string
+    {
+        return 'Payment Methods';
+    }
 
     public function headings(): array
     {
@@ -235,9 +263,10 @@ class PaymentMethodsSheet implements FromCollection, WithHeadings, WithTitle, Wi
 
     public function collection()
     {
-        $totalRevenue = (float) Order::where('payment_status', 'paid')->whereBetween('created_at', [$this->start, $this->end])->sum('grand_total');
+        $totalRevenue = (float) Order::where('payment_status', 'paid')->whereNotIn('status', ['cancelled', 'rto'])->whereBetween('created_at', [$this->start, $this->end])->sum('grand_total');
 
         return Order::where('payment_status', 'paid')
+            ->whereNotIn('status', ['cancelled', 'rto'])
             ->whereBetween('created_at', [$this->start, $this->end])
             ->select('payment_method', DB::raw('COUNT(*) as txns'), DB::raw('SUM(grand_total) as revenue'))
             ->groupBy('payment_method')

@@ -16,7 +16,7 @@ class OrderReturnController extends Controller
      */
     public function index(Request $request)
     {
-        $query = OrderReturn::with(['order', 'orderItem.product', 'customer', 'returnReason'])
+        $query = OrderReturn::with(['order', 'orderItem.product', 'orderItem.addons', 'customer', 'returnReason'])
             ->latest();
 
         if ($request->filled('search')) {
@@ -47,7 +47,7 @@ class OrderReturnController extends Controller
             'total' => OrderReturn::count(),
             'pending' => OrderReturn::where('status', 'pending')->count(),
             'approved' => OrderReturn::where('status', 'approved')->count(),
-            'refunded_amount' => RefundTransaction::sum('amount'),
+            'refunded_amount' => RefundTransaction::where('status', 'completed')->sum('amount'),
         ];
 
         return view('admin.order-returns.index', compact('returns', 'stats'));
@@ -58,7 +58,7 @@ class OrderReturnController extends Controller
      */
     public function show(OrderReturn $orderReturn)
     {
-        $orderReturn->load(['order', 'orderItem.product', 'customer', 'returnReason', 'refundTransaction']);
+        $orderReturn->load(['order', 'orderItem.product', 'orderItem.addons', 'customer', 'returnReason', 'refundTransaction']);
 
         return view('admin.order-returns.show', ['return' => $orderReturn]);
     }
@@ -88,19 +88,15 @@ class OrderReturnController extends Controller
             'url' => route('user.orders.show', $orderReturn->order_id),
         ]);
 
-// ADD THIS
-\App\Models\AdminNotification::notify([
-    'type'      => 'return',
-    'title'     => 'Return approved',
-    'message'   => 'Return RET-' . str_pad($orderReturn->id, 4, '0', STR_PAD_LEFT) . ' approved for order #' . $orderReturn->order->order_number . '.',
-    'reference' => '#RET-' . str_pad($orderReturn->id, 4, '0', STR_PAD_LEFT),
-    'icon'      => 'fa-undo',
-    'url'       => route('admin.order-returns.show', $orderReturn->id),
-    'link_text' => 'View Return',
-]);
-
-        // Notify customer (optional – hook in your notification system)
-        // Notification::send($orderReturn->customer, new ReturnApprovedNotification($orderReturn));
+        \App\Models\AdminNotification::notify([
+            'type'      => 'return',
+            'title'     => 'Return approved',
+            'message'   => 'Return RET-' . str_pad($orderReturn->id, 4, '0', STR_PAD_LEFT) . ' approved for order #' . $orderReturn->order->order_number . '.',
+            'reference' => '#RET-' . str_pad($orderReturn->id, 4, '0', STR_PAD_LEFT),
+            'icon'      => 'fa-undo',
+            'url'       => route('admin.order-returns.show', $orderReturn->id),
+            'link_text' => 'View Return',
+        ]);
 
         return redirect()
             ->back()
@@ -138,7 +134,6 @@ class OrderReturnController extends Controller
             'url' => route('user.orders.show', $orderReturn->order_id),
         ]);
 
-
         return redirect()
             ->back()
             ->with('success', 'Return RET-' . str_pad($orderReturn->id, 4, '0', STR_PAD_LEFT) . ' has been rejected.');
@@ -152,6 +147,10 @@ class OrderReturnController extends Controller
      * requested in submitReturn() and must stay untouched as an audit trail.
      * The admin's actual transaction details (which may legitimately differ
      * from the customer's request) are recorded only on RefundTransaction.
+     *
+     * Refund amount is computed via OrderReturn::refundable_amount, which
+     * includes the item's line total, its addons, and a proportional share
+     * of the order's tax — not just orderItem->price.
      */
     public function refund(Request $request, OrderReturn $orderReturn)
     {
@@ -197,9 +196,10 @@ class OrderReturnController extends Controller
                 'order_return_id' => $orderReturn->id,
                 'order_id' => $orderReturn->order_id,
                 'customer_id' => $orderReturn->customer_id,
+                'status' => 'completed',
                 'refund_method' => $request->refund_method,
                 'utr_id' => $request->utr_id,
-                'amount' => $orderReturn->orderItem->price ?? 0,
+                'amount' => $orderReturn->refundable_amount,
                 'remarks' => $request->remarks,
                 'payment_proof' => $proofPath,
 
@@ -223,19 +223,17 @@ class OrderReturnController extends Controller
                 'color' => 'success',
                 'url' => route('user.orders.show', $orderReturn->order_id),
             ]);
-            
-            // ADD THIS
-\App\Models\AdminNotification::notify([
-    'type'      => 'return',
-    'title'     => 'Refund processed',
-    'message'   => 'Refund of ₹' . number_format($refund->amount, 2) . ' for return RET-' . str_pad($orderReturn->id, 4, '0', STR_PAD_LEFT) . ' has been successfully credited to the customer\'s account.',
-    'reference' => '#RET-' . str_pad($orderReturn->id, 4, '0', STR_PAD_LEFT),
-    'icon'      => 'fa-undo',
-    'url'       => route('admin.order-returns.show', $orderReturn->id),
-    'link_text' => 'View Return',
-]);
-        });
 
+            \App\Models\AdminNotification::notify([
+                'type'      => 'return',
+                'title'     => 'Refund processed',
+                'message'   => 'Refund of ₹' . number_format($refund->amount, 2) . ' for return RET-' . str_pad($orderReturn->id, 4, '0', STR_PAD_LEFT) . ' has been successfully credited to the customer\'s account.',
+                'reference' => '#RET-' . str_pad($orderReturn->id, 4, '0', STR_PAD_LEFT),
+                'icon'      => 'fa-undo',
+                'url'       => route('admin.order-returns.show', $orderReturn->id),
+                'link_text' => 'View Return',
+            ]);
+        });
 
         return redirect()
             ->route('admin.order-returns.show', $orderReturn->id)
@@ -244,11 +242,58 @@ class OrderReturnController extends Controller
     }
 
     /**
+     * Mark a completed refund as failed (bank bounce / wrong UTR / reversed).
+     * Reopens the return as 'approved' so the admin can retry via refund().
+     */
+    public function markRefundFailed(Request $request, OrderReturn $orderReturn)
+    {
+        abort_if($orderReturn->status !== 'completed', 422, 'Only a completed refund can be marked failed.');
+        abort_if(!$orderReturn->refundTransaction, 422, 'No refund transaction found for this return.');
+
+        $request->validate([
+            'failure_reason' => 'nullable|string|max:500',
+        ]);
+
+        DB::transaction(function () use ($orderReturn, $request) {
+            $orderReturn->refundTransaction->update(['status' => 'failed']);
+
+            // Reopen the return so admin can process the refund again.
+            $orderReturn->update([
+                'status' => 'approved',
+                'admin_note' => trim(($orderReturn->admin_note ?? '') . ' | Refund failed: ' . ($request->failure_reason ?? 'not specified')),
+            ]);
+
+            \App\Models\Notification::create([
+                'customer_id' => $orderReturn->customer_id,
+                'title' => 'Refund Failed — Retrying',
+                'message' => 'Your refund attempt could not be completed. Our team is retrying it and will update you shortly.',
+                'icon' => 'fa-solid fa-triangle-exclamation',
+                'color' => 'danger',
+                'url' => route('user.orders.show', $orderReturn->order_id),
+            ]);
+
+            \App\Models\AdminNotification::notify([
+                'type'      => 'return',
+                'title'     => 'Refund failed',
+                'message'   => 'Refund for return RET-' . str_pad($orderReturn->id, 4, '0', STR_PAD_LEFT) . ' failed and needs retry.',
+                'reference' => '#RET-' . str_pad($orderReturn->id, 4, '0', STR_PAD_LEFT),
+                'icon'      => 'fa-triangle-exclamation',
+                'url'       => route('admin.order-returns.show', $orderReturn->id),
+                'link_text' => 'Retry Refund',
+            ]);
+        });
+
+        return redirect()
+            ->route('admin.order-returns.show', $orderReturn->id)
+            ->with('success', 'Refund marked as failed. Return is reopened for retry.');
+    }
+
+    /**
      * Export returns as CSV.
      */
     public function export(Request $request)
     {
-        $returns = OrderReturn::with(['order', 'orderItem.product', 'customer', 'returnReason', 'refundTransaction'])
+        $returns = OrderReturn::with(['order', 'orderItem.product', 'orderItem.addons', 'customer', 'returnReason', 'refundTransaction'])
             ->latest()
             ->get();
 
@@ -284,7 +329,7 @@ class OrderReturnController extends Controller
                     $r->customer->email ?? '',
                     $r->orderItem->product->name ?? '',
                     $r->returnReason->name ?? $r->details ?? '',
-                    $r->orderItem->price ?? 0,
+                    $r->refundable_amount,
                     ucfirst($r->status),
                     $r->refundTransaction->utr_id ?? '',
                     $r->refundTransaction->refund_method ?? '',

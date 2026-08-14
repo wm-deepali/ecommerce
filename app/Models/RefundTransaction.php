@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -9,8 +8,10 @@ class RefundTransaction extends Model
 {
     protected $fillable = [
         'order_return_id',
+        'ndr_id',
         'order_id',
         'customer_id',
+        'status',
         'refund_method',
         'upi_id',
         'bank_name',
@@ -25,6 +26,10 @@ class RefundTransaction extends Model
         'payment_proof',
     ];
 
+    public function ndr()
+    {
+        return $this->belongsTo(Ndr::class);
+    }
     public function orderReturn()
     {
         return $this->belongsTo(OrderReturn::class);

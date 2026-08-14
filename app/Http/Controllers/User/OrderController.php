@@ -160,7 +160,9 @@ class OrderController extends Controller
             $qrPath = $request->file('qr_image')->store('returns/qr', 'public');
         }
 
-        OrderReturn::create([
+        // FIX: capture the created model — this was previously discarded,
+        // which made $orderReturn undefined below and broke every return submission.
+        $orderReturn = OrderReturn::create([
             'order_id' => $order->id,
             'order_item_id' => $item->id,
             'customer_id' => $customer->id,
@@ -179,18 +181,17 @@ class OrderController extends Controller
             'account_type' => $request->refund_method === 'bank' ? $request->account_type : null,
         ]);
 
-
-// admin notification
-\App\Models\AdminNotification::notify([
-    'type'      => 'return',
-    'title'     => 'Return request received',
-    'message'   => "{$customer->name} raised a {$request->type} request for {$item->product_name} from order #{$order->order_number}."
-        . ($request->details ? " Reason: {$request->details}." : ''),
-    'reference' => '#RET-' . str_pad($orderReturn->id, 4, '0', STR_PAD_LEFT),
-    'icon'      => 'fa-undo',
-    'url'       => route('admin.order-returns.show', $orderReturn->id),
-    'link_text' => 'Review Return',
-]);
+        // admin notification
+        \App\Models\AdminNotification::notify([
+            'type'      => 'return',
+            'title'     => 'Return request received',
+            'message'   => "{$customer->name} raised a {$request->type} request for {$item->product_name} from order #{$order->order_number}."
+                . ($request->details ? " Reason: {$request->details}." : ''),
+            'reference' => '#RET-' . str_pad($orderReturn->id, 4, '0', STR_PAD_LEFT),
+            'icon'      => 'fa-undo',
+            'url'       => route('admin.order-returns.show', $orderReturn->id),
+            'link_text' => 'Review Return',
+        ]);
 
         return back()->with('success', 'Return request submitted. We\'ll process your refund within 3–5 business days.');
     }

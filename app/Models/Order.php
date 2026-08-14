@@ -111,9 +111,19 @@ class Order extends Model
 
     public function returns()
     {
-      return $this->hasMany(
+        return $this->hasMany(
             OrderReturn::class
         );
+    }
+
+    public function ndrs()
+    {
+        return $this->hasMany(Ndr::class)->latest();
+    }
+
+    public function latestNdr()
+    {
+        return $this->hasOne(Ndr::class)->latestOfMany();
     }
 
 }

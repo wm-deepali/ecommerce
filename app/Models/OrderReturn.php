@@ -47,6 +47,11 @@ class OrderReturn extends Model
         return $this->belongsTo(ReturnReason::class);
     }
 
+    public function refundTransaction()
+    {
+        return $this->hasOne(RefundTransaction::class);
+    }
+
     /**
      * Human-readable refund method label.
      */
@@ -60,9 +65,36 @@ class OrderReturn extends Model
         };
     }
 
-    public function refundTransaction()
+    /**
+     * Total amount that should be refunded for this return:
+     * item line total (price × qty) + any addons on that item + a
+     * proportional share of the order's tax.
+     *
+     * Tax is stored only at order level (orders.tax_amount), not per item,
+     * so it is prorated based on this item's share of order.subtotal.
+     * order.subtotal and order_items.total both exclude addons (per
+     * Cart::recalculateTotals()), so the proportion lines up correctly.
+     * Addons themselves are untaxed in this system and are added as-is.
+     */
+    public function getRefundableAmountAttribute(): float
     {
-        return $this->hasOne(RefundTransaction::class);
-    }
+        $item = $this->orderItem;
+        $order = $this->order;
 
+        if (!$item || !$order) {
+            return 0;
+        }
+
+        $addonsTotal = $item->addons->sum('price');
+        $itemCostWithAddons = $item->total + $addonsTotal;
+
+        if ((float) $order->subtotal <= 0) {
+            return round($itemCostWithAddons, 2);
+        }
+
+        $itemShare = $item->total / $order->subtotal;
+        $proratedTax = $itemShare * $order->tax_amount;
+
+        return round($itemCostWithAddons + $proratedTax, 2);
+    }
 }
